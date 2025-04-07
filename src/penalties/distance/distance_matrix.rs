@@ -1,38 +1,38 @@
+use crate::domain::city::City;
+
+use super::utils::{flatten, is_symmetric};
+
 pub struct DistanceMatrix {
     n: usize,
-    matrix: Vec<u64>,
+    flat_matrix: Vec<u64>,
     symmetric: bool,
 }
 
 impl DistanceMatrix {
     pub fn new(matrix: Vec<Vec<u64>>) -> DistanceMatrix {
         let n = matrix.len();
-        let symmetric = matrix.iter().enumerate().all(|(i, row)| {
-            row.iter()
-                .enumerate()
-                .all(|(j, &value)| value == matrix[j][i])
-        });
-        let matrix = matrix
-            .iter()
-            .flat_map(|row| row.iter())
-            .copied()
-            .collect::<Vec<u64>>();
+
+        let flat_matrix = flatten(matrix);
+        let symmetric = is_symmetric(&flat_matrix, n);
+
         DistanceMatrix {
             n,
-            matrix,
+            flat_matrix,
             symmetric,
         }
     }
 
     pub fn row(&self, i: usize) -> &[u64] {
-        &self.matrix[i * self.n..(i + 1) * self.n]
+        &self.flat_matrix[i * self.n..(i + 1) * self.n]
     }
     pub fn column(&self, j: usize) -> Vec<u64> {
-        (0..self.n).map(|i| self.matrix[i * self.n + j]).collect()
+        (0..self.n)
+            .map(|i| self.flat_matrix[i * self.n + j])
+            .collect()
     }
 
-    pub fn distance(&self, i: usize, j: usize) -> u64 {
-        self.matrix[i * self.n + j]
+    pub fn distance(&self, i: City, j: City) -> u64 {
+        self.flat_matrix[i.id() * self.n + j.id()]
     }
 
     pub fn len(&self) -> usize {
@@ -52,9 +52,9 @@ mod tests {
     fn test_distance_matrix() {
         let matrix = vec![vec![0, 1, 2], vec![30, 0, 40], vec![500, 600, 0]];
         let distance_matrix = DistanceMatrix::new(matrix);
-        assert_eq!(distance_matrix.distance(0, 1), 1);
-        assert_eq!(distance_matrix.distance(1, 2), 40);
-        assert_eq!(distance_matrix.distance(2, 0), 500);
+        assert_eq!(distance_matrix.distance(City(0), City(1)), 1);
+        assert_eq!(distance_matrix.distance(City(1), City(2)), 40);
+        assert_eq!(distance_matrix.distance(City(2), City(0)), 500);
         assert!(!distance_matrix.is_symmetric());
     }
     #[test]

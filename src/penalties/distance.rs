@@ -1,9 +1,10 @@
 pub mod distance_matrix;
-use crate::{route::Route, solution::Solution};
+mod utils;
+use crate::{domain::route::Route, solution::Solution};
 pub use distance_matrix::DistanceMatrix;
 
 pub struct DistancePenalizer {
-    distance_matrix: DistanceMatrix,
+    pub(crate) distance_matrix: DistanceMatrix,
 }
 
 impl DistancePenalizer {

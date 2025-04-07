@@ -15,12 +15,3 @@ impl Input {
         }
     }
 }
-
-pub(crate) fn get_input_from_raw(distance_matrix: Vec<Vec<u64>>, time_limit: Option<f64>) -> Input {
-    let real_distance_matrix = DistanceMatrix::new(distance_matrix);
-    let time_limit = match time_limit {
-        Some(limit) => Some(chrono::Duration::milliseconds((limit * 1_000_000.0) as i64)),
-        None => None,
-    };
-    Input::new(real_distance_matrix, time_limit)
-}
