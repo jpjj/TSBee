@@ -13,7 +13,6 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "matplotlib>=3.7.5",
-    "maturin>=1.8.3",
 ]
 [tool.maturin]
 features = ["pyo3/extension-module"]
