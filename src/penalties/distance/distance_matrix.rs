@@ -1,7 +1,7 @@
 use crate::domain::city::City;
 
 use super::utils::{flatten, is_symmetric};
-
+#[derive(Clone)]
 pub struct DistanceMatrix {
     n: usize,
     flat_matrix: Vec<u64>,

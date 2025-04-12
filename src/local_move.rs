@@ -5,7 +5,10 @@ use std::{
 
 use crate::{
     domain::city::City,
-    penalties::{candidates::Candidates, distance::DistanceMatrix},
+    penalties::{
+        candidates::Candidates,
+        distance::{self, DistanceMatrix, DistancePenalizer},
+    },
     solution::Solution,
 };
 
@@ -13,6 +16,7 @@ pub(super) struct LocalSearch<'a> {
     distance_matrix: &'a DistanceMatrix,
     candidates: &'a Candidates,
     current_solution: &'a Solution,
+    dont_look_bits: &'a mut Vec<bool>,
 }
 
 impl<'a> LocalSearch<'a> {
@@ -20,15 +24,17 @@ impl<'a> LocalSearch<'a> {
         distance_matrix: &'a DistanceMatrix,
         candidates: &'a Candidates,
         current_solution: &'a Solution,
+        dont_look_bits: &'a mut Vec<bool>,
     ) -> Self {
         LocalSearch {
             distance_matrix,
             candidates,
             current_solution,
+            dont_look_bits,
         }
     }
 
-    pub(crate) fn execute_2opt(&self) -> Solution {
+    pub(crate) fn execute_2opt(&mut self) -> Solution {
         // There will be four different cities involded:
         // route[i], route[i+1]
         // route[j] and route[j+1]
@@ -54,16 +60,17 @@ impl<'a> LocalSearch<'a> {
         let mut current_solution = self.current_solution.clone();
         let sequence = current_solution.route.sequence.clone();
         let n = current_solution.route.len();
-        let succ: Vec<City> = sequence
-            .iter()
-            .enumerate()
-            .map(|(i, _)| sequence[(i + 1) % n])
-            .collect();
+        let mut succ: Vec<City> = sequence.clone();
+        succ.rotate_left(1);
         let mut city_to_route_pos = vec![0; n];
         for (i, city_i) in current_solution.route.clone().into_iter().enumerate() {
             city_to_route_pos[city_i] = i;
         }
         for (i, &city_i) in sequence.iter().enumerate() {
+            if !self.dont_look_bits[city_i.id()] {
+                continue;
+            }
+            // self.dont_look_bits[city_i.id()] = false;
             // we remove edge a
             let city_i_succ = succ[i];
             let dist_a = self.distance_matrix.distance(city_i, city_i_succ) as i64;
@@ -82,8 +89,14 @@ impl<'a> LocalSearch<'a> {
 
                 let dist_delta = dist_b + dist_d - dist_a - dist_c;
                 if dist_delta < 0 {
-                    current_solution.route.sequence[min(j, i + 1)..=max(j, i + 1)].reverse();
+                    current_solution.route.sequence[min(i, j) + 1..=max(i, j)].reverse();
                     current_solution.distance.sub_assign((-dist_delta) as u64);
+                    self.dont_look_bits[city_i.id()] = true;
+                    self.dont_look_bits[city_j.id()] = true;
+                    self.dont_look_bits[city_i_succ.id()] = true;
+                    self.dont_look_bits[city_j_succ.id()] = true;
+                    self.dont_look_bits[sequence[(i + n - 1) % n].id()] = true;
+                    self.dont_look_bits[sequence[(j + n - 1) % n].id()] = true;
                     return current_solution;
                 }
             }
@@ -102,22 +115,28 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_2op_move() {
-        // test of having 4 cities on the line: 0 -- 1 -- 2 -- 3
+    fn test_2opt_move() {
+        // test of having 4 cities on the line: 0 - 1 -- 2 --- 3, with increasing distances
         let dm = DistanceMatrix::new(vec![
-            vec![0, 1, 2, 3],
-            vec![1, 0, 1, 2],
-            vec![2, 1, 0, 1],
-            vec![3, 2, 1, 0],
+            vec![0, 1, 3, 6],
+            vec![1, 0, 2, 5],
+            vec![3, 2, 0, 3],
+            vec![6, 5, 3, 0],
         ]);
         let candidates = get_nn_candidates(&dm, 2);
         let route = Route::from_iter(vec![0, 2, 1, 3]);
         let penalizer = DistancePenalizer::new(dm);
         let solution = penalizer.penalize(&route);
-        assert_eq!(solution.distance, 8);
-        let local_search = LocalSearch::new(&penalizer.distance_matrix, &candidates, &solution);
+        assert_eq!(solution.distance, 16);
+        let mut dont_look_bits: Vec<bool> = (0..4).map(|_| true).collect();
+        let mut local_search = LocalSearch::new(
+            &penalizer.distance_matrix,
+            &candidates,
+            &solution,
+            &mut dont_look_bits,
+        );
         let new_solution = local_search.execute_2opt();
         assert_eq!(new_solution.route, Route::from_iter(vec![0, 1, 2, 3]));
-        assert_eq!(new_solution.distance, 6);
+        assert_eq!(new_solution.distance, 12);
     }
 }

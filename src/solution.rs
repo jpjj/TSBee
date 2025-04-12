@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use crate::domain::route::Route;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Solution {
     pub route: Route,
     pub distance: u64,

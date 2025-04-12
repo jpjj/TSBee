@@ -1,3 +1,4 @@
+mod cache;
 mod parameters;
 mod solution_manager;
 pub mod solution_report;
@@ -10,6 +11,7 @@ use crate::penalties::candidates::candidate_set::get_nn_candidates;
 use crate::penalties::candidates::Candidates;
 use crate::penalties::distance::DistancePenalizer;
 
+use cache::SolverCache;
 use parameters::Parameters;
 use rand::rng;
 use rand::seq::SliceRandom;
@@ -24,6 +26,7 @@ pub struct Solver {
     stats: Stats,
     parameters: Parameters,
     candidates: Candidates,
+    cache: SolverCache,
 }
 
 impl Solver {
@@ -42,6 +45,7 @@ impl Solver {
             _ => n,
         };
         let candidates = get_nn_candidates(&penalizer.distance_matrix, max_neighbors);
+        let cache = SolverCache::new(n);
         Solver {
             n,
             penalizer,
@@ -49,6 +53,7 @@ impl Solver {
             stats,
             parameters,
             candidates,
+            cache,
         }
     }
 
@@ -126,10 +131,11 @@ impl Solver {
 
     /// executes local search and returns true if better solution has been found
     fn run_local_search(&mut self) -> bool {
-        let local_move = LocalSearch::new(
+        let mut local_move = LocalSearch::new(
             &self.penalizer.distance_matrix,
             &self.candidates,
             &self.solution_manager.current_solution,
+            &mut self.cache.dont_look_bits,
         );
         let new_solution = local_move.execute_2opt();
         if new_solution < self.solution_manager.current_solution {
@@ -142,6 +148,10 @@ impl Solver {
 
 #[cfg(test)]
 mod tests {
+
+    use crate::preprocess;
+
+    use super::Solver;
 
     #[test]
     fn solves_att48() {
@@ -204,6 +214,12 @@ mod tests {
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
-        let solution = crate::solve(distance_matrix, None);
+
+        let raw_input = preprocess::RawInput::new(distance_matrix, None);
+        let input = raw_input.into();
+        let mut solver = Solver::new(input);
+
+        let solution_report = solver.solve();
+        assert_eq!(solution_report.best_solution.distance, 36012);
     }
 }
