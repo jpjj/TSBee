@@ -9,19 +9,19 @@ use crate::{
     solution::Solution,
 };
 
-pub(super) struct LocalMove<'a> {
+pub(super) struct LocalSearch<'a> {
     distance_matrix: &'a DistanceMatrix,
     candidates: &'a Candidates,
     current_solution: &'a Solution,
 }
 
-impl<'a> LocalMove<'a> {
+impl<'a> LocalSearch<'a> {
     pub(crate) fn new(
         distance_matrix: &'a DistanceMatrix,
         candidates: &'a Candidates,
         current_solution: &'a Solution,
     ) -> Self {
-        LocalMove {
+        LocalSearch {
             distance_matrix,
             candidates,
             current_solution,
@@ -57,12 +57,7 @@ impl<'a> LocalMove<'a> {
         let succ: Vec<City> = sequence
             .iter()
             .enumerate()
-            .map(|(i, city_i)| sequence[(i + 1) % n])
-            .collect();
-        let pred: Vec<City> = sequence
-            .iter()
-            .enumerate()
-            .map(|(i, city_i)| sequence[(i - 1) % n])
+            .map(|(i, _)| sequence[(i + 1) % n])
             .collect();
         let mut city_to_route_pos = vec![0; n];
         for (i, city_i) in current_solution.route.clone().into_iter().enumerate() {
@@ -70,20 +65,20 @@ impl<'a> LocalMove<'a> {
         }
         for (i, &city_i) in sequence.iter().enumerate() {
             // we remove edge a
-            let city_i_plus_1 = succ[city_i.id()];
-            let dist_a = self.distance_matrix.distance(city_i, city_i_plus_1) as i64;
+            let city_i_succ = succ[i];
+            let dist_a = self.distance_matrix.distance(city_i, city_i_succ) as i64;
             for &city_j in self.candidates.get_neighbors(&city_i) {
                 let j = city_to_route_pos[city_j.id()];
-                let city_j_plus_1 = succ[city_j.id()];
+                let city_j_succ = succ[j];
 
                 let dist_b = self.distance_matrix.distance(city_i, city_j) as i64;
-                if dist_a - dist_b > 0 {
-                    // all other cities j are even further away from city i, because candidate lits are ordered
+                if dist_b - dist_a > 0 {
+                    // all other cities j are even further away from city i, because candidate lists are in ascending order of distance
                     // hence, we will stay positive, and according to the positive gain criterion, we might as well stop.
                     break;
                 }
-                let dist_c = self.distance_matrix.distance(city_j, city_j_plus_1) as i64;
-                let dist_d = self.distance_matrix.distance(city_i_plus_1, city_j_plus_1) as i64;
+                let dist_c = self.distance_matrix.distance(city_j, city_j_succ) as i64;
+                let dist_d = self.distance_matrix.distance(city_i_succ, city_j_succ) as i64;
 
                 let dist_delta = dist_b + dist_d - dist_a - dist_c;
                 if dist_delta < 0 {
@@ -94,5 +89,35 @@ impl<'a> LocalMove<'a> {
             }
         }
         current_solution
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        domain::route::Route,
+        penalties::{candidates::candidate_set::get_nn_candidates, distance::DistancePenalizer},
+    };
+
+    use super::*;
+
+    #[test]
+    fn test_2op_move() {
+        // test of having 4 cities on the line: 0 -- 1 -- 2 -- 3
+        let dm = DistanceMatrix::new(vec![
+            vec![0, 1, 2, 3],
+            vec![1, 0, 1, 2],
+            vec![2, 1, 0, 1],
+            vec![3, 2, 1, 0],
+        ]);
+        let candidates = get_nn_candidates(&dm, 2);
+        let route = Route::from_iter(vec![0, 2, 1, 3]);
+        let penalizer = DistancePenalizer::new(dm);
+        let solution = penalizer.penalize(&route);
+        assert_eq!(solution.distance, 8);
+        let local_search = LocalSearch::new(&penalizer.distance_matrix, &candidates, &solution);
+        let new_solution = local_search.execute_2opt();
+        assert_eq!(new_solution.route, Route::from_iter(vec![0, 1, 2, 3]));
+        assert_eq!(new_solution.distance, 6);
     }
 }

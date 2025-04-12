@@ -1,110 +1,21 @@
+mod parameters;
+mod solution_manager;
+pub mod solution_report;
+mod stats;
+
 use crate::domain::route::Route;
-use crate::local_move::LocalMove;
+use crate::input::Input;
+use crate::local_move::LocalSearch;
 use crate::penalties::candidates::candidate_set::get_nn_candidates;
 use crate::penalties::candidates::Candidates;
-use crate::solution::Solution;
-use crate::{input::Input, penalties::distance::DistancePenalizer};
+use crate::penalties::distance::DistancePenalizer;
 
+use parameters::Parameters;
 use rand::rng;
 use rand::seq::SliceRandom;
-
-/// A struct to hold the statistics of the solver
-#[derive(Clone)]
-pub(super) struct Stats {
-    pub(super) start_time: chrono::DateTime<chrono::Utc>,
-    pub(super) time_taken: chrono::Duration,
-    pub(super) iterations: u64,
-    pub(super) iterations_since_last_improvement: u64,
-}
-
-impl Stats {
-    fn new() -> Self {
-        let start_time = chrono::Utc::now();
-        let time_taken = chrono::Duration::zero();
-        let iterations = 0;
-        let iterations_since_last_improvement = 0;
-        Self {
-            start_time,
-            time_taken,
-            iterations,
-            iterations_since_last_improvement,
-        }
-    }
-
-    fn reset(&mut self) {
-        self.start_time = chrono::Utc::now();
-        self.time_taken = chrono::Duration::zero();
-        self.iterations = 0;
-        self.iterations_since_last_improvement = 0;
-    }
-}
-
-/// struct managing solutions, like current and best
-struct SolutionManager {
-    current_solution: Solution,
-    best_solution: Solution,
-}
-
-impl SolutionManager {
-    fn new(current_solution: Solution) -> Self {
-        let best_solution = current_solution.clone();
-        SolutionManager {
-            current_solution,
-            best_solution,
-        }
-    }
-
-    fn update_best(&mut self) -> bool {
-        if self.current_solution < self.best_solution {
-            self.best_solution = self.current_solution.clone();
-            return true;
-        }
-        false
-    }
-}
-
-/// parameters that influence the solver's behavior
-struct Parameters {
-    //  maximum number of iterations
-    max_iterations: Option<u64>,
-    //  maximum time limit for the solver
-    max_time: Option<chrono::Duration>,
-    //  maximum number of iterations without improvement
-    max_no_improvement: Option<u64>,
-    //  maximum number of neighbors to consider in local moves to make graph more sparse
-    max_neighbors: Option<usize>,
-}
-
-impl Parameters {
-    fn new(
-        max_iterations: Option<u64>,
-        max_time: Option<chrono::Duration>,
-        max_no_improvement: Option<u64>,
-        max_neighbors: Option<usize>,
-    ) -> Self {
-        Self {
-            max_iterations,
-            max_time,
-            max_no_improvement,
-            max_neighbors,
-        }
-    }
-}
-
-/// struct to be returned from Solver.solve() containing the best solution found and the stats of the solver run.
-pub(super) struct SolutionReport {
-    pub(super) best_solution: Solution,
-    pub(super) stats: Stats,
-}
-
-impl SolutionReport {
-    fn new(best_solution: Solution, stats: Stats) -> Self {
-        Self {
-            best_solution,
-            stats,
-        }
-    }
-}
+use solution_manager::SolutionManager;
+use solution_report::SolutionReport;
+use stats::Stats;
 
 pub struct Solver {
     n: usize,
@@ -174,7 +85,7 @@ impl Solver {
             Some(limit) => chrono::Utc::now() - self.stats.start_time <= limit,
             None => true,
         };
-        // no max_no_improvement means we continue as long as iterations since lastimprovment is 0.
+        // no max_no_improvement means we continue as long as iterations since last improvment is 0.
         result &= match self.parameters.max_no_improvement {
             Some(limit) => limit < self.stats.iterations_since_last_improvement,
             None => self.stats.iterations_since_last_improvement == 0,
@@ -191,10 +102,15 @@ impl Solver {
     /// function for solving the tsp
     pub fn solve(&mut self) -> SolutionReport {
         self.stats.reset();
+
+        // run while global criterion is met (time, max iterations, ...)
         while self.continuation_criterion() {
             self.generate_initial_solution();
+            // run until global AND single iteration criterion are met
             while self.continuation_criterion() {
-                self.run_heuristics();
+                if !self.run_local_search() {
+                    break;
+                }
             }
             self.stats.iterations += 1;
             self.stats.iterations_since_last_improvement += 1;
@@ -208,13 +124,86 @@ impl Solver {
         self.get_solution_report()
     }
 
-    fn run_heuristics(&mut self) {
-        let mut local_move = LocalMove::new(
+    /// executes local search and returns true if better solution has been found
+    fn run_local_search(&mut self) -> bool {
+        let local_move = LocalSearch::new(
             &self.penalizer.distance_matrix,
             &self.candidates,
             &self.solution_manager.current_solution,
         );
         let new_solution = local_move.execute_2opt();
-        self.solution_manager.current_solution = new_solution;
+        if new_solution < self.solution_manager.current_solution {
+            self.solution_manager.current_solution = new_solution;
+            return true;
+        }
+        return false;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn solves_att48() {
+        let city_coordinates = vec![
+            (6734, 1453),
+            (2233, 10),
+            (5530, 1424),
+            (401, 841),
+            (3082, 1644),
+            (7608, 4458),
+            (7573, 3716),
+            (7265, 1268),
+            (6898, 1885),
+            (1112, 2049),
+            (5468, 2606),
+            (5989, 2873),
+            (4706, 2674),
+            (4612, 2035),
+            (6347, 2683),
+            (6107, 669),
+            (7611, 5184),
+            (7462, 3590),
+            (7732, 4723),
+            (5900, 3561),
+            (4483, 3369),
+            (6101, 1110),
+            (5199, 2182),
+            (1633, 2809),
+            (4307, 2322),
+            (675, 1006),
+            (7555, 4819),
+            (7541, 3981),
+            (3177, 756),
+            (7352, 4506),
+            (7545, 2801),
+            (3245, 3305),
+            (6426, 3173),
+            (4608, 1198),
+            (23, 2216),
+            (7248, 3779),
+            (7762, 4595),
+            (7392, 2244),
+            (3484, 2829),
+            (6271, 2135),
+            (4985, 140),
+            (1916, 1569),
+            (7280, 4899),
+            (7509, 3239),
+            (10, 2676),
+            (6807, 2993),
+            (5185, 3258),
+            (3023, 1942),
+        ];
+        let distance_matrix = city_coordinates
+            .iter()
+            .map(|(x, y)| {
+                city_coordinates
+                    .iter()
+                    .map(|(a, b)| (((x - a) * (x - a) + (y - b) * (y - b)) as u64).isqrt())
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        let solution = crate::solve(distance_matrix, None);
     }
 }

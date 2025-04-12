@@ -2,7 +2,7 @@ use std::ops::Index;
 
 use super::city::City;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Route {
     pub sequence: Vec<City>,
 }

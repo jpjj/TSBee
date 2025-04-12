@@ -1,6 +1,6 @@
 use pyo3::pyclass;
 
-use crate::solver::SolutionReport;
+use crate::solver::solution_report::SolutionReport;
 
 /// Solution data returned to Python
 #[pyclass]
