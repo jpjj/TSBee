@@ -12,6 +12,10 @@ use crate::{
     solution::Solution,
 };
 
+enum TourNeighbor {
+    succ,
+    pred,
+}
 pub(super) struct LocalSearch<'a> {
     distance_matrix: &'a DistanceMatrix,
     candidates: &'a Candidates,
@@ -62,6 +66,8 @@ impl<'a> LocalSearch<'a> {
         let n = current_solution.route.len();
         let mut succ: Vec<City> = sequence.clone();
         succ.rotate_left(1);
+        let mut pred: Vec<City> = sequence.clone();
+        pred.rotate_right(1);
         let mut city_to_route_pos = vec![0; n];
         for (i, city_i) in current_solution.route.clone().into_iter().enumerate() {
             city_to_route_pos[city_i] = i;
@@ -70,34 +76,50 @@ impl<'a> LocalSearch<'a> {
             if !self.dont_look_bits[city_i.id()] {
                 continue;
             }
-            // self.dont_look_bits[city_i.id()] = false;
+            self.dont_look_bits[city_i.id()] = false;
             // we remove edge a
-            let city_i_succ = succ[i];
-            let dist_a = self.distance_matrix.distance(city_i, city_i_succ) as i64;
-            for &city_j in self.candidates.get_neighbors(&city_i) {
-                let j = city_to_route_pos[city_j.id()];
-                let city_j_succ = succ[j];
+            for neihbor_mode in [TourNeighbor::succ, TourNeighbor::pred] {
+                let city_i_neighbor = match neihbor_mode {
+                    TourNeighbor::pred => pred[i],
+                    TourNeighbor::succ => succ[i],
+                };
+                let dist_a = self.distance_matrix.distance(city_i, city_i_neighbor) as i64;
+                for &city_j in self.candidates.get_neighbors(&city_i) {
+                    let j = city_to_route_pos[city_j.id()];
+                    let city_j_neighbor = match neihbor_mode {
+                        TourNeighbor::pred => pred[j],
+                        TourNeighbor::succ => succ[j],
+                    };
 
-                let dist_b = self.distance_matrix.distance(city_i, city_j) as i64;
-                if dist_b - dist_a > 0 {
-                    // all other cities j are even further away from city i, because candidate lists are in ascending order of distance
-                    // hence, we will stay positive, and according to the positive gain criterion, we might as well stop.
-                    break;
-                }
-                let dist_c = self.distance_matrix.distance(city_j, city_j_succ) as i64;
-                let dist_d = self.distance_matrix.distance(city_i_succ, city_j_succ) as i64;
+                    let dist_b = self.distance_matrix.distance(city_i, city_j) as i64;
+                    if dist_b - dist_a > 0 {
+                        // all other cities j are even further away from city i, because candidate lists are in ascending order of distance
+                        // hence, we will stay positive, and according to the positive gain criterion, we might as well stop.
+                        break;
+                    }
+                    let dist_c = self.distance_matrix.distance(city_j, city_j_neighbor) as i64;
+                    let dist_d = self
+                        .distance_matrix
+                        .distance(city_i_neighbor, city_j_neighbor)
+                        as i64;
 
-                let dist_delta = dist_b + dist_d - dist_a - dist_c;
-                if dist_delta < 0 {
-                    current_solution.route.sequence[min(i, j) + 1..=max(i, j)].reverse();
-                    current_solution.distance.sub_assign((-dist_delta) as u64);
-                    self.dont_look_bits[city_i.id()] = true;
-                    self.dont_look_bits[city_j.id()] = true;
-                    self.dont_look_bits[city_i_succ.id()] = true;
-                    self.dont_look_bits[city_j_succ.id()] = true;
-                    self.dont_look_bits[sequence[(i + n - 1) % n].id()] = true;
-                    self.dont_look_bits[sequence[(j + n - 1) % n].id()] = true;
-                    return current_solution;
+                    let dist_delta = dist_b + dist_d - dist_a - dist_c;
+                    if dist_delta < 0 {
+                        match neihbor_mode {
+                            TourNeighbor::pred => {
+                                current_solution.route.sequence[min(i, j)..=max(i, j) - 1].reverse()
+                            }
+                            TourNeighbor::succ => {
+                                current_solution.route.sequence[min(i, j) + 1..=max(i, j)].reverse()
+                            }
+                        };
+                        current_solution.distance.sub_assign((-dist_delta) as u64);
+                        self.dont_look_bits[city_i.id()] = true;
+                        self.dont_look_bits[city_j.id()] = true;
+                        self.dont_look_bits[city_i_neighbor.id()] = true;
+                        self.dont_look_bits[city_j_neighbor.id()] = true;
+                        return current_solution;
+                    }
                 }
             }
         }
@@ -138,5 +160,52 @@ mod tests {
         let new_solution = local_search.execute_2opt();
         assert_eq!(new_solution.route, Route::from_iter(vec![0, 1, 2, 3]));
         assert_eq!(new_solution.distance, 12);
+    }
+
+    #[test]
+    fn test_2opt_move_find_bug() {
+        let points = vec![
+            (645518.4029093542, 853641.6301845956),
+            (806054.5520532002, 369411.3404976124),
+            (970315.9643777334, 618855.4020392457),
+            (523196.31561350834, 946352.43727379),
+            (601861.375632943, 313526.93343764124),
+            (156287.85823354396, 111339.58558488055),
+            (308549.29934907873, 150790.53298796996),
+            (134092.46313257294, 500195.4897519112),
+            (935944.0039263178, 955213.2226539637),
+            (768137.7385539332, 917514.6021244357),
+        ];
+        let dm = DistanceMatrix::new(
+            points
+                .iter()
+                .map(|(x, y)| {
+                    points
+                        .iter()
+                        .map(|(a, b)| {
+                            (1000 * ((x - a) * (x - a) + (y - b) * (y - b)) as u64).isqrt()
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>(),
+        );
+        let candidates = get_nn_candidates(&dm, 20);
+        let route = Route::from_iter(vec![6, 5, 7, 4, 2, 8, 9, 3, 0, 1]);
+        let penalizer = DistancePenalizer::new(dm);
+        let solution = penalizer.penalize(&route);
+        // assert_eq!(solution.distance, 16);
+        let mut dont_look_bits: Vec<bool> = (0..points.len()).map(|_| true).collect();
+        let mut local_search = LocalSearch::new(
+            &penalizer.distance_matrix,
+            &candidates,
+            &solution,
+            &mut dont_look_bits,
+        );
+        let new_solution = local_search.execute_2opt();
+        assert_eq!(
+            new_solution.route,
+            Route::from_iter(vec![6, 5, 7, 4, 2, 8, 9, 3, 0, 1])
+        );
+        // assert_eq!(new_solution.distance, 12);
     }
 }

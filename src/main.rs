@@ -78,7 +78,15 @@ fn main() {
     let raw_input = preprocess::RawInput::new(distance_matrix, None);
     let input = raw_input.into();
     let mut solver = Solver::new(input);
-    for _ in 0..10 {
-        let solution_report = solver.solve();
+    let mut solutions = vec![];
+    for _ in 0..1000 {
+        solutions.push(solver.solve());
     }
+    println!(
+        "{}",
+        solutions
+            .into_iter()
+            .map(|s| s.stats.iterations)
+            .sum::<u64>()
+    );
 }
