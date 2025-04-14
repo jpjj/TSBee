@@ -13,8 +13,9 @@ use crate::penalties::distance::DistancePenalizer;
 
 use cache::SolverCache;
 use parameters::Parameters;
-use rand::rng;
+use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
+use rand::SeedableRng;
 use solution_manager::SolutionManager;
 use solution_report::SolutionReport;
 use stats::Stats;
@@ -27,6 +28,7 @@ pub struct Solver {
     parameters: Parameters,
     candidates: Candidates,
     cache: SolverCache,
+    rng: StdRng,
 }
 
 impl Solver {
@@ -39,13 +41,14 @@ impl Solver {
 
         let solution_manager = SolutionManager::new(current_solution);
         let stats = Stats::new();
-        let parameters = Parameters::new(None, time_limit, None, Some(20));
+        let parameters = Parameters::new(None, time_limit, None, Some(3));
         let max_neighbors = match parameters.max_neighbors {
             Some(limit) => limit,
             _ => n,
         };
         let candidates = get_nn_candidates(&penalizer.distance_matrix, max_neighbors);
         let cache = SolverCache::new(n);
+        let rng = StdRng::seed_from_u64(42);
         Solver {
             n,
             penalizer,
@@ -54,6 +57,7 @@ impl Solver {
             parameters,
             candidates,
             cache,
+            rng,
         }
     }
 
@@ -71,7 +75,7 @@ impl Solver {
 
     fn generate_random_solution(&mut self) {
         let mut sequence = (0..self.n).collect::<Vec<usize>>();
-        sequence.shuffle(&mut rng());
+        sequence.shuffle(&mut self.rng);
         let route = Route::from_iter(sequence);
         self.solution_manager.current_solution = self.penalizer.penalize(&route)
     }
@@ -105,7 +109,7 @@ impl Solver {
     }
 
     /// function for solving the tsp
-    pub fn solve(&mut self) -> SolutionReport {
+    pub fn solve(&mut self, dlb: bool) -> SolutionReport {
         self.stats.reset();
 
         // run while global criterion is met (time, max iterations, ...)
@@ -113,7 +117,7 @@ impl Solver {
             self.generate_initial_solution();
             // run until global AND single iteration criterion are met
             while self.continuation_criterion() {
-                if !self.run_local_search() {
+                if !self.run_local_search(dlb) {
                     break;
                 }
             }
@@ -130,14 +134,14 @@ impl Solver {
     }
 
     /// executes local search and returns true if better solution has been found
-    fn run_local_search(&mut self) -> bool {
+    fn run_local_search(&mut self, dlb: bool) -> bool {
         let mut local_move = LocalSearch::new(
             &self.penalizer.distance_matrix,
             &self.candidates,
             &self.solution_manager.current_solution,
             &mut self.cache.dont_look_bits,
         );
-        let new_solution = local_move.execute_2opt();
+        let new_solution = local_move.execute_2opt(dlb);
         if new_solution < self.solution_manager.current_solution {
             self.solution_manager.current_solution = new_solution;
             return true;
@@ -219,7 +223,7 @@ mod tests {
         let input = raw_input.into();
         let mut solver = Solver::new(input);
 
-        let solution_report = solver.solve();
+        let solution_report = solver.solve(true);
         assert_eq!(solution_report.best_solution.distance, 36012);
     }
 }

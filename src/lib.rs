@@ -22,7 +22,7 @@ fn solve(distance_matrix: Vec<Vec<u64>>, time_limit: Option<f64>) -> PyResult<Py
     let input = raw_input.into();
     let mut solver = Solver::new(input);
 
-    let solution_report = solver.solve();
+    let solution_report = solver.solve(true);
 
     let py_solution = solution_report.into();
 

@@ -5,6 +5,7 @@ pub mod utils;
 
 pub(crate) struct Candidates {
     candidates: Vec<Vec<City>>,
+    inverse_candidates:
 }
 
 impl Candidates {

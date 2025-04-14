@@ -6,87 +6,82 @@ mod postprocess;
 mod preprocess;
 mod solution;
 mod solver;
-use rand;
+use csv::Writer;
+use input::Input;
+use rand::{self, rngs::StdRng, Rng, SeedableRng};
 use solver::Solver;
+use std::time::Instant;
+use std::{error::Error, fs::File};
 
-fn main() {
-    // let city_coordinates = vec![
-    //     (6734, 1453),
-    //     (2233, 10),
-    //     (5530, 1424),
-    //     (401, 841),
-    //     (3082, 1644),
-    //     (7608, 4458),
-    //     (7573, 3716),
-    //     (7265, 1268),
-    //     (6898, 1885),
-    //     (1112, 2049),
-    //     (5468, 2606),
-    //     (5989, 2873),
-    //     (4706, 2674),
-    //     (4612, 2035),
-    //     (6347, 2683),
-    //     (6107, 669),
-    //     (7611, 5184),
-    //     (7462, 3590),
-    //     (7732, 4723),
-    //     (5900, 3561),
-    //     (4483, 3369),
-    //     (6101, 1110),
-    //     (5199, 2182),
-    //     (1633, 2809),
-    //     (4307, 2322),
-    //     (675, 1006),
-    //     (7555, 4819),
-    //     (7541, 3981),
-    //     (3177, 756),
-    //     (7352, 4506),
-    //     (7545, 2801),
-    //     (3245, 3305),
-    //     (6426, 3173),
-    //     (4608, 1198),
-    //     (23, 2216),
-    //     (7248, 3779),
-    //     (7762, 4595),
-    //     (7392, 2244),
-    //     (3484, 2829),
-    //     (6271, 2135),
-    //     (4985, 140),
-    //     (1916, 1569),
-    //     (7280, 4899),
-    //     (7509, 3239),
-    //     (10, 2676),
-    //     (6807, 2993),
-    //     (5185, 3258),
-    //     (3023, 1942),
-    // ];
+fn main() -> Result<(), Box<dyn Error>> {
+    let cities = vec![(16, 638), (602, 832), (411, 379), (531, 989), (461, 759)];
 
-    let city_coordinates = (0..1000)
-        .into_iter()
-        .map(|_| (rand::random_range(0..1000), rand::random_range(0..1000)))
-        .collect::<Vec<(i32, i32)>>();
-    let distance_matrix = city_coordinates
-        .iter()
-        .map(|(x, y)| {
-            city_coordinates
-                .iter()
-                .map(|(a, b)| (((x - a) * (x - a) + (y - b) * (y - b)) as u64).isqrt())
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
-
-    let raw_input = preprocess::RawInput::new(distance_matrix, None);
-    let input = raw_input.into();
-    let mut solver = Solver::new(input);
-    let mut solutions = vec![];
-    for _ in 0..1000 {
-        solutions.push(solver.solve());
-    }
-    println!(
-        "{}",
-        solutions
+    let mut rng = StdRng::seed_from_u64(43);
+    // let mut solutions = vec![];
+    let number_trials = 10000;
+    let problem_size = 6;
+    let square_width = 1000;
+    for i in 0..number_trials {
+        // if i % 100 == 0 {
+        //     println!("{}", i);
+        // }
+        let mut city_coordinates = (0..problem_size)
             .into_iter()
-            .map(|s| s.stats.iterations)
-            .sum::<u64>()
-    );
+            .map(|_| {
+                (
+                    rng.random_range(0..square_width),
+                    rng.random_range(0..square_width),
+                )
+            })
+            .collect::<Vec<(i32, i32)>>();
+        // city_coordinates = cities.clone();
+        if i != 8374 {
+            continue;
+        }
+        let distance_matrix = city_coordinates
+            .iter()
+            .map(|(x, y)| {
+                city_coordinates
+                    .iter()
+                    .map(|(a, b)| (((x - a) * (x - a) + (y - b) * (y - b)) as u64).isqrt())
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+
+        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), None);
+        let input: Input = raw_input.into();
+        let mut solver = Solver::new(input);
+
+        let start = Instant::now();
+        let sol1 = solver.solve(true);
+        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), None);
+
+        let input: Input = raw_input.into();
+        let mut solver = Solver::new(input);
+        let sol2 = solver.solve(false);
+        if sol1.best_solution != sol2.best_solution {
+            println!("different solutions detected.");
+        }
+        // println!("Time elapsed: {:?}", duration);
+    }
+    // let distances = solutions
+    //     .into_iter()
+    //     .map(|s| s.best_solution.distance)
+    //     .collect::<Vec<u64>>();
+    // println!("{}", distances.into_iter().sum::<u64>());
+    // Create a file to write to
+    // let file = File::create("nodontlookbits100k.csv")?;
+    // let mut writer = Writer::from_writer(file);
+
+    // // Write each element as a row
+    // for num in distances {
+    //     writer.write_record(&[num.to_string()])?;
+    // }
+
+    // // Flush the writer to ensure all data is written
+    // writer.flush()?;
+
+    // println!("CSV file created successfully!");
+    Ok(())
+    // with don't look bits it is 24781
 }

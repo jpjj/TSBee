@@ -38,7 +38,7 @@ impl<'a> LocalSearch<'a> {
         }
     }
 
-    pub(crate) fn execute_2opt(&mut self) -> Solution {
+    pub(crate) fn execute_2opt(&mut self, dlb: bool) -> Solution {
         // There will be four different cities involded:
         // route[i], route[i+1]
         // route[j] and route[j+1]
@@ -69,11 +69,11 @@ impl<'a> LocalSearch<'a> {
         let mut pred: Vec<City> = sequence.clone();
         pred.rotate_right(1);
         let mut city_to_route_pos = vec![0; n];
-        for (i, city_i) in current_solution.route.clone().into_iter().enumerate() {
-            city_to_route_pos[city_i] = i;
+        for (i, city_i) in sequence.iter().enumerate() {
+            city_to_route_pos[city_i.id()] = i;
         }
         for (i, &city_i) in sequence.iter().enumerate() {
-            if !self.dont_look_bits[city_i.id()] {
+            if (!self.dont_look_bits[city_i.id()]) & dlb {
                 continue;
             }
             self.dont_look_bits[city_i.id()] = false;
@@ -114,10 +114,21 @@ impl<'a> LocalSearch<'a> {
                             }
                         };
                         current_solution.distance.sub_assign((-dist_delta) as u64);
-                        self.dont_look_bits[city_i.id()] = true;
-                        self.dont_look_bits[city_j.id()] = true;
-                        self.dont_look_bits[city_i_neighbor.id()] = true;
-                        self.dont_look_bits[city_j_neighbor.id()] = true;
+                        // we have to activate the don't look bits for every node, that has
+                        // as a neighbor any of these four cities.
+                        // In theory, this should catch everything then.
+                        // Because even if dist_a has not changed, dist_b is from a neighbor.
+                        // so all of these guys neighbors have to be activated
+                        // here is the error, this is not bijective, we have to als know which of these four cities
+                        // in in which other cities candidate list?
+                        // in order to do this, we would have to turn it around.
+                        // it would be the inverse candidate list.
+                        for city in [city_i, city_j, city_i_neighbor, city_j_neighbor] {
+                            self.dont_look_bits[city.id()] = true;
+                            for neibhbor in self.candidates.get_neighbors(&city) {
+                                self.dont_look_bits[neibhbor.id()] = true;
+                            }
+                        }
                         return current_solution;
                     }
                 }
@@ -157,7 +168,7 @@ mod tests {
             &solution,
             &mut dont_look_bits,
         );
-        let new_solution = local_search.execute_2opt();
+        let new_solution = local_search.execute_2opt(true);
         assert_eq!(new_solution.route, Route::from_iter(vec![0, 1, 2, 3]));
         assert_eq!(new_solution.distance, 12);
     }
@@ -201,7 +212,7 @@ mod tests {
             &solution,
             &mut dont_look_bits,
         );
-        let new_solution = local_search.execute_2opt();
+        let new_solution = local_search.execute_2opt(true);
         assert_eq!(
             new_solution.route,
             Route::from_iter(vec![6, 5, 7, 4, 2, 8, 9, 3, 0, 1])

@@ -72,3 +72,9 @@ docs/_build/
 .python-version
 
 results
+
+*.png
+*.csv
+*.svg
+perf.data
+perf.data.old
