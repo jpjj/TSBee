@@ -25,9 +25,18 @@ mod tests {
         let distance_matrix = DistanceMatrix::new(matrix);
         let k = 2;
         let candidates = get_nn_candidates(&distance_matrix, k);
-        assert_eq!(candidates.get_neighbors(&City(0)), vec![City(1), City(2)]);
-        assert_eq!(candidates.get_neighbors(&City(1)), vec![City(0), City(2)]);
-        assert_eq!(candidates.get_neighbors(&City(2)), vec![City(0), City(1)]);
+        assert_eq!(
+            candidates.get_neighbors_out(&City(0)),
+            vec![City(1), City(2)]
+        );
+        assert_eq!(
+            candidates.get_neighbors_out(&City(1)),
+            vec![City(0), City(2)]
+        );
+        assert_eq!(
+            candidates.get_neighbors_out(&City(2)),
+            vec![City(0), City(1)]
+        );
     }
 
     #[test]
@@ -36,8 +45,8 @@ mod tests {
         let distance_matrix = DistanceMatrix::new(matrix);
         let k = 1;
         let candidates = get_nn_candidates(&distance_matrix, k);
-        assert_eq!(candidates.get_neighbors(&City(0)), vec![City(1)]);
-        assert_eq!(candidates.get_neighbors(&City(1)), vec![City(0)]);
-        assert_eq!(candidates.get_neighbors(&City(2)), vec![City(0)]);
+        assert_eq!(candidates.get_neighbors_out(&City(0)), vec![City(1)]);
+        assert_eq!(candidates.get_neighbors_out(&City(1)), vec![City(0)]);
+        assert_eq!(candidates.get_neighbors_out(&City(2)), vec![City(0)]);
     }
 }

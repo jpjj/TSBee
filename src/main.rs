@@ -18,8 +18,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut rng = StdRng::seed_from_u64(43);
     // let mut solutions = vec![];
-    let number_trials = 10000;
-    let problem_size = 6;
+    let number_trials = 1000;
+    let problem_size = 15;
     let square_width = 1000;
     for i in 0..number_trials {
         // if i % 100 == 0 {
@@ -35,9 +35,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             })
             .collect::<Vec<(i32, i32)>>();
         // city_coordinates = cities.clone();
-        if i != 8374 {
-            continue;
-        }
+        // if i != 9665 {
+        //     continue;
+        // }
         let distance_matrix = city_coordinates
             .iter()
             .map(|(x, y)| {
@@ -60,7 +60,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut solver = Solver::new(input);
         let sol2 = solver.solve(false);
         if sol1.best_solution != sol2.best_solution {
-            println!("different solutions detected.");
+            println!("different solutions detected at iteration {}.", i);
         }
         // println!("Time elapsed: {:?}", duration);
     }

@@ -20,7 +20,7 @@ pub(super) struct LocalSearch<'a> {
     distance_matrix: &'a DistanceMatrix,
     candidates: &'a Candidates,
     current_solution: &'a Solution,
-    dont_look_bits: &'a mut Vec<bool>,
+    pub dont_look_bits: &'a mut Vec<bool>,
 }
 
 impl<'a> LocalSearch<'a> {
@@ -84,7 +84,7 @@ impl<'a> LocalSearch<'a> {
                     TourNeighbor::succ => succ[i],
                 };
                 let dist_a = self.distance_matrix.distance(city_i, city_i_neighbor) as i64;
-                for &city_j in self.candidates.get_neighbors(&city_i) {
+                for &city_j in self.candidates.get_neighbors_out(&city_i) {
                     let j = city_to_route_pos[city_j.id()];
                     let city_j_neighbor = match neihbor_mode {
                         TourNeighbor::pred => pred[j],
@@ -125,8 +125,22 @@ impl<'a> LocalSearch<'a> {
                         // it would be the inverse candidate list.
                         for city in [city_i, city_j, city_i_neighbor, city_j_neighbor] {
                             self.dont_look_bits[city.id()] = true;
-                            for neibhbor in self.candidates.get_neighbors(&city) {
+                            self.dont_look_bits[succ[city_to_route_pos[city.id()]].id()] = true;
+                            self.dont_look_bits[pred[city_to_route_pos[city.id()]].id()] = true;
+
+                            for neibhbor in self.candidates.get_neighbors_in(&city) {
                                 self.dont_look_bits[neibhbor.id()] = true;
+                                self.dont_look_bits[succ[city_to_route_pos[neibhbor.id()]].id()] =
+                                    true;
+                                self.dont_look_bits[pred[city_to_route_pos[neibhbor.id()]].id()] =
+                                    true;
+                            }
+                            for neibhbor in self.candidates.get_neighbors_out(&city) {
+                                self.dont_look_bits[neibhbor.id()] = true;
+                                self.dont_look_bits[succ[city_to_route_pos[neibhbor.id()]].id()] =
+                                    true;
+                                self.dont_look_bits[pred[city_to_route_pos[neibhbor.id()]].id()] =
+                                    true;
                             }
                         }
                         return current_solution;
