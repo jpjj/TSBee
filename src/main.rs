@@ -18,8 +18,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut rng = StdRng::seed_from_u64(43);
     // let mut solutions = vec![];
-    let number_trials = 1000;
-    let problem_size = 15;
+    let number_trials = 10;
+    let problem_size = 1000;
     let square_width = 1000;
     for i in 0..number_trials {
         // if i % 100 == 0 {
@@ -54,15 +54,22 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let start = Instant::now();
         let sol1 = solver.solve(true);
+        let duration = Instant::now().checked_duration_since(start);
+        println!("Time elapsed dlb: {:?}", duration);
+
         let raw_input = preprocess::RawInput::new(distance_matrix.clone(), None);
 
         let input: Input = raw_input.into();
         let mut solver = Solver::new(input);
+
+        let start = Instant::now();
         let sol2 = solver.solve(false);
+
+        let duration = Instant::now().checked_duration_since(start);
+        println!("Time elapsed no dlb: {:?}", duration);
         if sol1.best_solution != sol2.best_solution {
             println!("different solutions detected at iteration {}.", i);
         }
-        // println!("Time elapsed: {:?}", duration);
     }
     // let distances = solutions
     //     .into_iter()

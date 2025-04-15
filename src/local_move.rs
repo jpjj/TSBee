@@ -105,14 +105,25 @@ impl<'a> LocalSearch<'a> {
 
                     let dist_delta = dist_b + dist_d - dist_a - dist_c;
                     if dist_delta < 0 {
-                        match neihbor_mode {
-                            TourNeighbor::pred => {
-                                current_solution.route.sequence[min(i, j)..=max(i, j) - 1].reverse()
+                        // first, check how big the margin
+                        let mut reverse_length = max(i, j) - min(i, j) - 1;
+                        match reverse_length > n / 2 {
+                            true => {
+                                current_solution.route.sequence.rotate_left(max(i, j));
+                                reverse_length = n - reverse_length;
                             }
-                            TourNeighbor::succ => {
-                                current_solution.route.sequence[min(i, j) + 1..=max(i, j)].reverse()
-                            }
+                            false => current_solution.route.sequence.rotate_left(min(i, j)),
                         };
+                        current_solution.route.sequence[0..reverse_length].reverse();
+                        // idea: we only have to rotate now the beginning of the sequence until reverse_length
+                        // match neihbor_mode {
+                        //     TourNeighbor::pred => {
+                        //         current_solution.route.sequence[min(i, j)..=max(i, j) - 1].reverse()
+                        //     }
+                        //     TourNeighbor::succ => {
+                        //         current_solution.route.sequence[min(i, j) + 1..=max(i, j)].reverse()
+                        //     }
+                        // };
                         current_solution.distance.sub_assign((-dist_delta) as u64);
                         // we have to activate the don't look bits for every node, that has
                         // as a neighbor any of these four cities.
@@ -123,24 +134,16 @@ impl<'a> LocalSearch<'a> {
                         // in in which other cities candidate list?
                         // in order to do this, we would have to turn it around.
                         // it would be the inverse candidate list.
-                        for city in [city_i, city_j, city_i_neighbor, city_j_neighbor] {
+                        for city in &current_solution.route.sequence[0..=reverse_length] {
                             self.dont_look_bits[city.id()] = true;
-                            self.dont_look_bits[succ[city_to_route_pos[city.id()]].id()] = true;
-                            self.dont_look_bits[pred[city_to_route_pos[city.id()]].id()] = true;
-
                             for neibhbor in self.candidates.get_neighbors_in(&city) {
                                 self.dont_look_bits[neibhbor.id()] = true;
-                                self.dont_look_bits[succ[city_to_route_pos[neibhbor.id()]].id()] =
-                                    true;
-                                self.dont_look_bits[pred[city_to_route_pos[neibhbor.id()]].id()] =
-                                    true;
                             }
-                            for neibhbor in self.candidates.get_neighbors_out(&city) {
+                        }
+                        for city in [city_i, city_i_neighbor, city_j, city_j_neighbor] {
+                            self.dont_look_bits[city.id()] = true;
+                            for neibhbor in self.candidates.get_neighbors_in(&city) {
                                 self.dont_look_bits[neibhbor.id()] = true;
-                                self.dont_look_bits[succ[city_to_route_pos[neibhbor.id()]].id()] =
-                                    true;
-                                self.dont_look_bits[pred[city_to_route_pos[neibhbor.id()]].id()] =
-                                    true;
                             }
                         }
                         return current_solution;
