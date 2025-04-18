@@ -75,7 +75,7 @@ def run_experiment(sizes, seed=42):
         fast_tsp_distance = calculate_tour_distance(fast_tsp_tour, distance_matrix)
 
         # Calculate difference percentage
-        diff_percentage = abs(tsp_solve_solution.distance - fast_tsp_distance) / min(
+        diff_percentage = (tsp_solve_solution.distance - fast_tsp_distance) / min(
             tsp_solve_solution.distance, fast_tsp_distance
         )
         results["diff_percentages"].append(diff_percentage)

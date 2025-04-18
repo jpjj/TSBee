@@ -144,20 +144,22 @@ impl<'a> LocalSearch<'a> {
 
         for (c1_pos, c1) in sequence.iter().enumerate() {
             let c2 = pred[c1_pos];
+            let c2_pos = (n - 1 + c1_pos) % n;
             let dist1 = self.distance_matrix.distance(*c1, c2);
 
             for c3 in self.candidates.get_neighbors_out(&c2) {
                 let c3_pos = city_to_route_pos[c3.id()];
                 let dist2 = self.distance_matrix.distance(c2, *c3);
+
                 // positive gain criterion
-                if dist2 > dist1 {
+                if dist1 <= dist2 {
                     // we add something that is bigger than what we would remove so far.
                     // since candidates are ordered by length, we break and go to next candidate.
                     break;
                 }
                 for c4 in [succ[c3_pos], pred[c3_pos]] {
                     if c4 == succ[c3_pos] {
-                        let c4_pos = c3_pos + 1;
+                        let c4_pos = (c3_pos + 1) % n;
                         let dist3 = self.distance_matrix.distance(*c3, c4);
 
                         // check whether you can do a 2-optmove:
@@ -181,6 +183,166 @@ impl<'a> LocalSearch<'a> {
                             //     distance_penalizer.penalize(&current_solution.route.clone())
                             // );
                             return current_solution;
+                        }
+
+                        // 2opt did not work, get c5
+                        for c5 in self.candidates.get_neighbors_out(&c4) {
+                            if c5 == c3 {
+                                continue; // wäre ein anderer 2Opt move, unnötig wahrscheinlich
+                            }
+                            let dist4 = self.distance_matrix.distance(c4, *c5);
+                            // positive gain criterion:
+                            if dist1 + dist3 <= dist2 + dist4 {
+                                // like before, dist4 will only grow
+                                break;
+                            }
+                            let c5_pos = city_to_route_pos[c5.id()];
+                            let relative_position = (n + c5_pos - c1_pos) % n;
+                            // check whether c5 is betwwen c1 and c3.
+                            if 0 < relative_position
+                                && relative_position < (n + c3_pos - c1_pos) % n
+                            {
+                                // in this case, we have to get the successor
+                                let c6 = succ[c5_pos];
+                                let c6_pos = (c5_pos + 1) % n;
+                                let dist5 = self.distance_matrix.distance(*c5, c6);
+                                let dist6 = self.distance_matrix.distance(c6, *c1);
+                                if dist1 + dist3 + dist5 > dist2 + dist4 + dist6 {
+                                    // modify route of current_solution
+                                    current_solution.route.sequence.rotate_left(c1_pos);
+                                    // now, city1 is at 0, city2 is at n-1
+                                    // first, we need to shift the slice from c6_pos until end by
+                                    current_solution.route.sequence[(n + c6_pos - c1_pos) % n..]
+                                        .rotate_left((n + c3_pos - c6_pos + 1) % n);
+                                    // we swapped two sequences, now we reverse the one further behind.
+                                    current_solution.route.sequence
+                                        [(n - c3_pos + c6_pos - 1) % n..]
+                                        .reverse();
+                                    // modify distance of current solution
+                                    current_solution.distance.sub_assign(
+                                        dist1 + dist3 + dist5 - (dist2 + dist4 + dist6),
+                                    );
+                                    // let distance_penalizer =
+                                    //     DistancePenalizer::new(self.distance_matrix.clone());
+                                    // assert_eq!(
+                                    //     current_solution,
+                                    //     distance_penalizer
+                                    //         .penalize(&current_solution.route.clone())
+                                    // );
+                                    return current_solution;
+                                }
+                            } else {
+                                // so c6 must be the predecessor
+                                let c6 = pred[c5_pos];
+                                let c6_pos = (n + c5_pos - 1) % n;
+                                let dist5 = self.distance_matrix.distance(*c5, c6);
+                                let dist6 = self.distance_matrix.distance(c6, *c1);
+                                if dist1 + dist3 + dist5 > dist2 + dist4 + dist6 {
+                                    // modify route of current_solution
+                                    current_solution.route.sequence.rotate_left(c1_pos);
+                                    // now, city1 is at 0, city2 is at n-1
+                                    // we swapped two sequences, now we reverse one.
+                                    current_solution.route.sequence[(n + c5_pos - c1_pos) % n..]
+                                        .reverse();
+                                    // we need to shift the slice from c4_pos until end by
+                                    current_solution.route.sequence[(n + c4_pos - c1_pos) % n..]
+                                        .rotate_left((n + c6_pos - c4_pos + 1) % n);
+                                    // modify distance of current solution
+                                    current_solution.distance.sub_assign(
+                                        dist1 + dist3 + dist5 - (dist2 + dist4 + dist6),
+                                    );
+                                    // let distance_penalizer =
+                                    //     DistancePenalizer::new(self.distance_matrix.clone());
+                                    // assert_eq!(
+                                    //     current_solution,
+                                    //     distance_penalizer
+                                    //         .penalize(&current_solution.route.clone())
+                                    // );
+                                    return current_solution;
+                                }
+                            }
+                        }
+                    } else {
+                        // c4 = pred[c3_pos]
+                        let c4_pos = (n + c3_pos - 1) % n;
+                        let dist3 = self.distance_matrix.distance(*c3, c4);
+                        for c5 in self.candidates.get_neighbors_out(&c4) {
+                            let dist4 = self.distance_matrix.distance(c4, *c5);
+                            // positive gain criterion:
+                            if dist1 + dist3 <= dist2 + dist4 {
+                                // like before, dist4 will only grow
+                                break;
+                            }
+                            let c5_pos = city_to_route_pos[c5.id()];
+                            let relative_position = (n + c5_pos - c3_pos) % n;
+                            // check whether c5 is betwwen c3 and c2. Otherwise, we would get no roundtrip
+                            if relative_position <= (n + c2_pos - c3_pos) % n {
+                                // in this case, we have to get the successor or succesor
+                                for c6 in [succ[c5_pos], pred[c5_pos]] {
+                                    let dist5 = self.distance_matrix.distance(*c5, c6);
+                                    let dist6 = self.distance_matrix.distance(c6, *c1);
+                                    if dist1 + dist3 + dist5 > dist2 + dist4 + dist6 {
+                                        if c6 == succ[c5_pos] {
+                                            if *c5 == c2 {
+                                                // überlappung, beide haben succ
+                                                continue;
+                                            }
+                                            let c6_pos = (c5_pos + 1) % n;
+                                            // modify route of current_solution
+                                            current_solution.route.sequence.rotate_left(c1_pos);
+                                            // now, city1 is at 0, city2 is at n-1
+                                            // we can reverse from c3 to including c5 and c6 until the end
+                                            current_solution.route.sequence[(n + c3_pos - c1_pos)
+                                                % n
+                                                ..=(n + c5_pos - c1_pos) % n]
+                                                .reverse();
+                                            current_solution.route.sequence
+                                                [(n + c6_pos - c1_pos) % n..]
+                                                .reverse();
+                                            // modify distance of current solution
+                                            current_solution.distance.sub_assign(
+                                                dist1 + dist3 + dist5 - (dist2 + dist4 + dist6),
+                                            );
+                                            // let distance_penalizer = DistancePenalizer::new(
+                                            //     self.distance_matrix.clone(),
+                                            // );
+                                            // assert_eq!(
+                                            //     current_solution,
+                                            //     distance_penalizer
+                                            //         .penalize(&current_solution.route.clone())
+                                            // );
+                                            return current_solution;
+                                        } else {
+                                            if *c5 == *c3 {
+                                                // überlappung, beide haben pred
+                                                continue;
+                                            }
+                                            // so c6 must be the predecessor
+                                            let c6_pos = (n + c5_pos - 1) % n;
+                                            // modify route of current_solution
+                                            current_solution.route.sequence.rotate_left(c1_pos);
+                                            // now, city1 is at 0, city2 is at n-1
+                                            // we only need to shift the slice from c4_pos until end by
+                                            current_solution.route.sequence
+                                                [(n + c3_pos - c1_pos) % n..]
+                                                .rotate_left((n + c6_pos - c3_pos + 1) % n);
+                                            // modify distance of current solution
+                                            current_solution.distance.sub_assign(
+                                                dist1 + dist3 + dist5 - (dist2 + dist4 + dist6),
+                                            );
+                                            // let distance_penalizer = DistancePenalizer::new(
+                                            //     self.distance_matrix.clone(),
+                                            // );
+                                            // assert_eq!(
+                                            //     current_solution,
+                                            //     distance_penalizer
+                                            //         .penalize(&current_solution.route.clone())
+                                            // );
+                                            return current_solution;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

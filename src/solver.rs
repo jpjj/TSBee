@@ -156,6 +156,26 @@ impl Solver {
             && self.parameters.max_no_improvement.is_none()
     }
 
+    fn double_bridge_kick(&mut self) {
+        self.update_best_solution();
+
+        let mut new_solution = self.solution_manager.best_solution.clone();
+        let mut random_numbers = (0..4)
+            .map(|_| self.rng.random_range(0..self.n))
+            .collect::<Vec<usize>>();
+        random_numbers.sort();
+        let a = 0;
+        let b = random_numbers[1] - random_numbers[0];
+        let c = random_numbers[2] - random_numbers[0];
+        let d = random_numbers[3] - random_numbers[0];
+        new_solution.route.sequence.rotate_left(random_numbers[0]);
+        new_solution.route.sequence[a..b].reverse();
+        new_solution.route.sequence[b..c].reverse();
+        new_solution.route.sequence[c..d].reverse();
+        new_solution.route.sequence[d..].reverse();
+        self.solution_manager.current_solution = self.penalizer.penalize(&new_solution.route);
+    }
+
     /// function for solving the tsp
     pub fn solve(&mut self, dlb: bool) -> SolutionReport {
         self.stats.reset();
@@ -166,7 +186,12 @@ impl Solver {
             // run until global AND single iteration criterion are met
             while self.continuation_criterion() {
                 if !self.run_local_search(dlb) {
-                    break;
+                    if self.stats.iterations < 1000 {
+                        self.stats.iterations += 1;
+                        self.double_bridge_kick();
+                    } else {
+                        break;
+                    }
                 }
             }
             self.stats.iterations += 1;
