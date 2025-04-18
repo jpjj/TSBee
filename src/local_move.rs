@@ -39,28 +39,22 @@ impl<'a> LocalSearch<'a> {
     }
 
     pub(crate) fn execute_2opt(&mut self, dlb: bool) -> Solution {
-        // There will be four different cities involded:
-        // route[i], route[i+1]
-        // route[j] and route[j+1]
+        // There will be four different cities involved:
+        // city_i, city_i_neighbor
+        // city_j, city_j_neighbor
+        // here city_j is in the candidate list of city_i
+        // city_i_neighbor is the predecessor or successor of city_i
+        // city_j_neighbor is the predecessor or successor of city_j
 
-        // j is a neighbor of i.
-        // a = (route[i], route[i+1]) will be removed
-        // b = (route[i], route[j]) will e added
-        // c = (route[j], route[j+1]) will be removed
-        // d = (route[i+1], route[j+1]) will be added
+        // a = {city_i, city_i_neighbor} will be removed
+        // b = (city_i, city_j) will be added
+        // c = {city_j, city_j_neighbor} will be removed
+        // d = (city_i_neighbor, city_j_neighbor) will be added
 
         // given the positive gain criteria, we will have
-        // if -dist(a) + dist(b) positive, we can already break
+        // if dist(b) - dist(a) positive, we can already break
         // reason for this is that If there is a 2Opt improvement, there will be some
         // sequence of a,b,c,d, such that the partial sum (b-a) is negative.
-
-        // Wenn das läuft, don't look bits einfügen.
-        // geht über mehrere 2Opt iterations
-        // erst alle scharf gestellt
-        // wenn two-opt move gemacht wird, kann für die 4 (wenn man nachdenkt, vielleicht sogar weniger)
-        // beteiligten Cities die bits wieder scharf gestellt werden.
-        // das sollte gewaltig dabei helfen, die finale no improvement runde zu verkürzen.
-        // idee ist ja prinzipiell, wenn einmal alles angeschaut wurde O(nk), kann pro verbesserung nur 4 neue Optionen hinzukommen.
         let mut current_solution = self.current_solution.clone();
         let sequence = current_solution.route.sequence.clone();
         let n = current_solution.route.len();
@@ -73,12 +67,12 @@ impl<'a> LocalSearch<'a> {
             city_to_route_pos[city_i.id()] = i;
         }
         for (i, &city_i) in sequence.iter().enumerate() {
-            if (!self.dont_look_bits[city_i.id()]) & dlb {
-                continue;
-            }
-            self.dont_look_bits[city_i.id()] = false;
+            // if (!self.dont_look_bits[city_i.id()]) & dlb {
+            //     continue;
+            // }
+            // self.dont_look_bits[city_i.id()] = false;
             // we remove edge a
-            for neihbor_mode in [TourNeighbor::succ, TourNeighbor::pred] {
+            for neihbor_mode in [TourNeighbor::pred] {
                 let city_i_neighbor = match neihbor_mode {
                     TourNeighbor::pred => pred[i],
                     TourNeighbor::succ => succ[i],
@@ -105,25 +99,14 @@ impl<'a> LocalSearch<'a> {
 
                     let dist_delta = dist_b + dist_d - dist_a - dist_c;
                     if dist_delta < 0 {
-                        // first, check how big the margin
-                        let mut reverse_length = max(i, j) - min(i, j) - 1;
-                        match reverse_length > n / 2 {
-                            true => {
-                                current_solution.route.sequence.rotate_left(max(i, j));
-                                reverse_length = n - reverse_length;
+                        match neihbor_mode {
+                            TourNeighbor::pred => {
+                                current_solution.route.sequence[min(i, j)..=max(i, j) - 1].reverse()
                             }
-                            false => current_solution.route.sequence.rotate_left(min(i, j)),
+                            TourNeighbor::succ => {
+                                current_solution.route.sequence[min(i, j) + 1..=max(i, j)].reverse()
+                            }
                         };
-                        current_solution.route.sequence[0..reverse_length].reverse();
-                        // idea: we only have to rotate now the beginning of the sequence until reverse_length
-                        // match neihbor_mode {
-                        //     TourNeighbor::pred => {
-                        //         current_solution.route.sequence[min(i, j)..=max(i, j) - 1].reverse()
-                        //     }
-                        //     TourNeighbor::succ => {
-                        //         current_solution.route.sequence[min(i, j) + 1..=max(i, j)].reverse()
-                        //     }
-                        // };
                         current_solution.distance.sub_assign((-dist_delta) as u64);
                         // we have to activate the don't look bits for every node, that has
                         // as a neighbor any of these four cities.
@@ -134,21 +117,74 @@ impl<'a> LocalSearch<'a> {
                         // in in which other cities candidate list?
                         // in order to do this, we would have to turn it around.
                         // it would be the inverse candidate list.
-                        for city in &current_solution.route.sequence[0..=reverse_length] {
-                            self.dont_look_bits[city.id()] = true;
-                            for neibhbor in self.candidates.get_neighbors_in(&city) {
-                                self.dont_look_bits[neibhbor.id()] = true;
-                            }
-                        }
-                        for city in [city_i, city_i_neighbor, city_j, city_j_neighbor] {
-                            self.dont_look_bits[city.id()] = true;
-                            for neibhbor in self.candidates.get_neighbors_in(&city) {
-                                self.dont_look_bits[neibhbor.id()] = true;
-                            }
-                        }
+                        // for city in [city_i, city_i_neighbor, city_j, city_j_neighbor] {
+                        //     self.dont_look_bits[city.id()] = true;
+                        // }
                         return current_solution;
                     }
                 }
+            }
+        }
+        current_solution
+    }
+
+    pub(crate) fn execute_3opt(&mut self, dlb: bool) -> Solution {
+        // preparation
+        let mut current_solution = self.current_solution.clone();
+        let sequence = current_solution.route.sequence.clone();
+        let n = current_solution.route.len();
+        let mut succ: Vec<City> = sequence.clone();
+        succ.rotate_left(1);
+        let mut pred: Vec<City> = sequence.clone();
+        pred.rotate_right(1);
+        let mut city_to_route_pos = vec![0; n];
+        for (i, city_i) in sequence.iter().enumerate() {
+            city_to_route_pos[city_i.id()] = i;
+        }
+
+        for (c1_pos, c1) in sequence.iter().enumerate() {
+            let c2 = pred[c1_pos];
+            let dist1 = self.distance_matrix.distance(*c1, c2);
+
+            for c3 in self.candidates.get_neighbors_out(&c2) {
+                let c3_pos = city_to_route_pos[c3.id()];
+                let dist2 = self.distance_matrix.distance(c2, *c3);
+                // positive gain criterion
+                if dist2 > dist1 {
+                    // we add something that is bigger than what we would remove so far.
+                    // since candidates are ordered by length, we break and go to next candidate.
+                    break;
+                }
+                for c4 in [succ[c3_pos], pred[c3_pos]] {
+                    if c4 == succ[c3_pos] {
+                        let c4_pos = c3_pos + 1;
+                        let dist3 = self.distance_matrix.distance(*c3, c4);
+
+                        // check whether you can do a 2-optmove:
+                        let dist4 = self.distance_matrix.distance(c4, *c1);
+
+                        // edges we remove are longer than the edges we add.
+                        if dist1 + dist3 > dist2 + dist4 {
+                            // modify route of current_solution
+                            current_solution.route.sequence.rotate_left(c1_pos);
+                            // now, city1 is at 0, city2 is at n-1
+                            // hence, we only need to rotate from (c4_pos - c1_pos) % n until n-1
+                            current_solution.route.sequence[(n + c4_pos - c1_pos) % n..].reverse();
+                            // modify distance of current solution
+                            current_solution
+                                .distance
+                                .sub_assign(dist1 + dist3 - (dist2 + dist4));
+                            // let distance_penalizer =
+                            //     DistancePenalizer::new(self.distance_matrix.clone());
+                            // assert_eq!(
+                            //     current_solution,
+                            //     distance_penalizer.penalize(&current_solution.route.clone())
+                            // );
+                            return current_solution;
+                        }
+                    }
+                }
+                let c4 = succ[c3_pos];
             }
         }
         current_solution

@@ -4,6 +4,7 @@ mod solution_manager;
 pub mod solution_report;
 mod stats;
 
+use crate::domain::city::City;
 use crate::domain::route::Route;
 use crate::input::Input;
 use crate::local_move::LocalSearch;
@@ -15,7 +16,7 @@ use cache::SolverCache;
 use parameters::Parameters;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
-use rand::SeedableRng;
+use rand::{Rng, SeedableRng};
 use solution_manager::SolutionManager;
 use solution_report::SolutionReport;
 use stats::Stats;
@@ -41,7 +42,7 @@ impl Solver {
 
         let solution_manager = SolutionManager::new(current_solution);
         let stats = Stats::new();
-        let parameters = Parameters::new(None, time_limit, None, Some(10));
+        let parameters = Parameters::new(None, time_limit, None, Some(20));
         let max_neighbors = match parameters.max_neighbors {
             Some(limit) => limit,
             _ => n,
@@ -69,6 +70,7 @@ impl Solver {
 
     fn generate_initial_solution(&mut self) {
         match self.stats.iterations {
+            0 => self.generate_nearest_neighbor(),
             _ => self.generate_random_solution(),
         }
     }
@@ -77,6 +79,52 @@ impl Solver {
         let mut sequence = (0..self.n).collect::<Vec<usize>>();
         sequence.shuffle(&mut self.rng);
         let route = Route::from_iter(sequence);
+        self.solution_manager.current_solution = self.penalizer.penalize(&route)
+    }
+
+    fn generate_nearest_neighbor(&mut self) {
+        let mut sequence: Vec<City> = Vec::with_capacity(self.n);
+        let start = self.rng.random_range(0..self.n);
+        let mut cities_visited = vec![false; self.n];
+        sequence.push(City(start));
+        while sequence.len() < self.n {
+            let mut city_found = false;
+            let city = sequence.last().unwrap().clone();
+            cities_visited[city.id()] = true;
+            let neighbors = self.candidates.get_neighbors_out(&city);
+            for neighbor in neighbors {
+                if !cities_visited[neighbor.id()] {
+                    sequence.push(neighbor.clone());
+                    city_found = true;
+                    break;
+                }
+            }
+            if !city_found {
+                // now we have to find the minimum not found, yet
+                let mut closest_city = None;
+                let mut min_distance = None;
+                for i in 0..self.n {
+                    if cities_visited[i] {
+                        continue;
+                    }
+                    let new_distance = self.penalizer.distance_matrix.distance(city, City(i));
+                    match min_distance {
+                        Some(actual_distance) => {
+                            if new_distance < actual_distance {
+                                min_distance = Some(new_distance);
+                                closest_city = Some(City(i));
+                            }
+                        }
+                        None => {
+                            min_distance = Some(new_distance);
+                            closest_city = Some(City(i));
+                        }
+                    }
+                }
+                sequence.push(closest_city.unwrap());
+            }
+        }
+        let route = Route::new(sequence);
         self.solution_manager.current_solution = self.penalizer.penalize(&route)
     }
 
@@ -141,7 +189,7 @@ impl Solver {
             &self.solution_manager.current_solution,
             &mut self.cache.dont_look_bits,
         );
-        let new_solution = local_move.execute_2opt(dlb);
+        let new_solution = local_move.execute_3opt(dlb);
         if new_solution < self.solution_manager.current_solution {
             self.solution_manager.current_solution = new_solution;
             return true;

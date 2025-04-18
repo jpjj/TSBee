@@ -7,4 +7,9 @@ impl SolverCache {
         let dont_look_bits = (0..n).map(|_| true).collect();
         Self { dont_look_bits }
     }
+
+    pub(super) fn reset(&mut self) {
+        let n = self.dont_look_bits.len();
+        self.dont_look_bits = (0..n).map(|_| true).collect();
+    }
 }

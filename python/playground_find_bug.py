@@ -21,7 +21,7 @@ def main():
     # for n = 10, lasse 1000 expermiente laufen und return das experiment,
     # wo die benutze längste  Kante von tsp_solve prozentual am längsten im gegensatz zur längsten von fast tsp ist.
     # Define problem sizes
-    sizes = [10] * 1000
+    sizes = [15] * 1000
 
     # Set a fixed random seed for reproducibility
     seed = 42
