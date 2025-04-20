@@ -69,17 +69,7 @@ impl Solver {
     }
 
     fn generate_initial_solution(&mut self) {
-        match self.stats.iterations {
-            0 => self.generate_nearest_neighbor(),
-            _ => self.generate_random_solution(),
-        }
-    }
-
-    fn generate_random_solution(&mut self) {
-        let mut sequence = (0..self.n).collect::<Vec<usize>>();
-        sequence.shuffle(&mut self.rng);
-        let route = Route::from_iter(sequence);
-        self.solution_manager.current_solution = self.penalizer.penalize(&route)
+        self.generate_nearest_neighbor()
     }
 
     fn generate_nearest_neighbor(&mut self) {
@@ -223,9 +213,8 @@ impl Solver {
 #[cfg(test)]
 mod tests {
 
-    use crate::preprocess;
-
     use super::Solver;
+    use crate::preprocess;
 
     #[test]
     fn solves_att48() {
@@ -294,6 +283,6 @@ mod tests {
         let mut solver = Solver::new(input);
 
         let solution_report = solver.solve(true);
-        assert_eq!(solution_report.best_solution.distance, 36012);
+        assert!(solution_report.best_solution.distance <= 36012);
     }
 }

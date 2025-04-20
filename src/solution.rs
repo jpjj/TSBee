@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, ops::SubAssign};
 
 use crate::domain::route::Route;
 
@@ -8,6 +8,16 @@ pub struct Solution {
     pub distance: u64,
 }
 
+impl Solution {
+    /// apply two-opt move. In order to not recalculate the distance, it most be ensured that the delta distance
+    /// is the actual difference between the old and the new sequence.
+    pub(super) fn apply_two_opt(&mut self, idx1: usize, idx2: usize, delta_distance: u64) {
+        let n = self.route.len();
+        self.route.sequence.rotate_left(idx1);
+        self.route.sequence[(n + idx2 - idx1) % n..].reverse();
+        self.distance.sub_assign(delta_distance);
+    }
+}
 impl PartialOrd for Solution {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))

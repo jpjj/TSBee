@@ -14,12 +14,10 @@ use std::time::Instant;
 use std::{error::Error, fs::File};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let cities = vec![(16, 638), (602, 832), (411, 379), (531, 989), (461, 759)];
-
     let mut rng = StdRng::seed_from_u64(43);
     // let mut solutions = vec![];
     let number_trials = 10;
-    let problem_size = 1000;
+    let problem_size = 100;
     let square_width = 1000;
     for i in 0..number_trials {
         // if i % 100 == 0 {
