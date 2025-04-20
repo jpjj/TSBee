@@ -145,7 +145,7 @@ impl Solver {
         // no max_no_improvement means we continue as long as iterations since last improvment is 0.
         result &= match self.parameters.max_no_improvement {
             Some(limit) => limit < self.stats.iterations_since_last_improvement,
-            None => self.stats.iterations_since_last_improvement == 0,
+            None => true,
         };
         return result;
     }
@@ -179,19 +179,14 @@ impl Solver {
     /// function for solving the tsp
     pub fn solve(&mut self, dlb: bool) -> SolutionReport {
         self.stats.reset();
+        self.generate_initial_solution();
 
         // run while global criterion is met (time, max iterations, ...)
         while self.continuation_criterion() {
-            self.generate_initial_solution();
             // run until global AND single iteration criterion are met
             while self.continuation_criterion() {
                 if !self.run_local_search(dlb) {
-                    if self.stats.iterations < 1000 {
-                        self.stats.iterations += 1;
-                        self.double_bridge_kick();
-                    } else {
-                        break;
-                    }
+                    break;
                 }
             }
             self.stats.iterations += 1;
@@ -201,6 +196,8 @@ impl Solver {
             if self.one_time() {
                 break;
             }
+            // diversification
+            self.double_bridge_kick();
         }
         self.stats.time_taken = chrono::Utc::now() - self.stats.start_time;
         self.get_solution_report()

@@ -48,7 +48,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             })
             .collect::<Vec<_>>();
 
-        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), None);
+        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), Some(2.0));
         let input: Input = raw_input.into();
         let mut solver = Solver::new(input);
 
