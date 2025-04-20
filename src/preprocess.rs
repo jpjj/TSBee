@@ -3,12 +3,12 @@ use pyo3::{exceptions::PyValueError, PyResult};
 use crate::{input::Input, penalties::distance::DistanceMatrix};
 
 pub(super) struct RawInput {
-    distance_matrix: Vec<Vec<u64>>,
+    distance_matrix: Vec<Vec<i64>>,
     time_limit: Option<f64>,
 }
 
 impl RawInput {
-    pub(super) fn new(distance_matrix: Vec<Vec<u64>>, time_limit: Option<f64>) -> Self {
+    pub(super) fn new(distance_matrix: Vec<Vec<i64>>, time_limit: Option<f64>) -> Self {
         Self {
             distance_matrix,
             time_limit,
@@ -21,7 +21,7 @@ impl RawInput {
 }
 
 /// Validates that the distance matrix is non-empty and square
-fn validate_distance_matrix(distance_matrix: &[Vec<u64>]) -> PyResult<()> {
+fn validate_distance_matrix(distance_matrix: &[Vec<i64>]) -> PyResult<()> {
     if distance_matrix.is_empty() {
         return Err(PyValueError::new_err("Distance matrix cannot be empty"));
     }

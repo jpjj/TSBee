@@ -6,7 +6,7 @@ use crate::solver::solution_report::SolutionReport;
 #[pyclass]
 pub struct PySolution {
     #[pyo3(get)]
-    distance: u64,
+    distance: i64,
     #[pyo3(get)]
     iterations: u64,
     #[pyo3(get)]

@@ -4,12 +4,12 @@ use super::utils::{flatten, is_symmetric};
 #[derive(Clone)]
 pub struct DistanceMatrix {
     n: usize,
-    flat_matrix: Vec<u64>,
+    flat_matrix: Vec<i64>,
     symmetric: bool,
 }
 
 impl DistanceMatrix {
-    pub fn new(matrix: Vec<Vec<u64>>) -> DistanceMatrix {
+    pub fn new(matrix: Vec<Vec<i64>>) -> DistanceMatrix {
         let n = matrix.len();
 
         let flat_matrix = flatten(matrix);
@@ -22,16 +22,16 @@ impl DistanceMatrix {
         }
     }
 
-    pub fn row(&self, i: usize) -> &[u64] {
+    pub fn row(&self, i: usize) -> &[i64] {
         &self.flat_matrix[i * self.n..(i + 1) * self.n]
     }
-    pub fn column(&self, j: usize) -> Vec<u64> {
+    pub fn column(&self, j: usize) -> Vec<i64> {
         (0..self.n)
             .map(|i| self.flat_matrix[i * self.n + j])
             .collect()
     }
 
-    pub fn distance(&self, i: City, j: City) -> u64 {
+    pub fn distance(&self, i: City, j: City) -> i64 {
         self.flat_matrix[i.id() * self.n + j.id()]
     }
 

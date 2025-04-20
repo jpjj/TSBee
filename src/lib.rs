@@ -13,7 +13,7 @@ use solver::Solver;
 /// Solving the Traveling Salesman Problem using the 2-opt algorithm
 #[pyfunction]
 #[pyo3(signature = (distance_matrix, time_limit=None))]
-fn solve(distance_matrix: Vec<Vec<u64>>, time_limit: Option<f64>) -> PyResult<PySolution> {
+fn solve(distance_matrix: Vec<Vec<i64>>, time_limit: Option<f64>) -> PyResult<PySolution> {
     let raw_input = preprocess::RawInput::new(distance_matrix, time_limit);
 
     // Validate the input
@@ -22,7 +22,7 @@ fn solve(distance_matrix: Vec<Vec<u64>>, time_limit: Option<f64>) -> PyResult<Py
     let input = raw_input.into();
     let mut solver = Solver::new(input);
 
-    let solution_report = solver.solve(false);
+    let solution_report = solver.solve(true);
 
     let py_solution = solution_report.into();
 

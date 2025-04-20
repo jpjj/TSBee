@@ -15,7 +15,6 @@ use crate::penalties::distance::DistancePenalizer;
 use cache::SolverCache;
 use parameters::Parameters;
 use rand::rngs::StdRng;
-use rand::seq::SliceRandom;
 use rand::{Rng, SeedableRng};
 use solution_manager::SolutionManager;
 use solution_report::SolutionReport;
@@ -164,6 +163,74 @@ impl Solver {
         new_solution.route.sequence[c..d].reverse();
         new_solution.route.sequence[d..].reverse();
         self.solution_manager.current_solution = self.penalizer.penalize(&new_solution.route);
+        self.cache.dont_look_bits[new_solution.route.sequence[a].id()] = true;
+        self.cache.dont_look_bits[new_solution.route.sequence[(self.n + a - 1) % self.n].id()] =
+            true;
+        self.cache.dont_look_bits[new_solution.route.sequence[(self.n + b - 1) % self.n].id()] =
+            true;
+        self.cache.dont_look_bits[new_solution.route.sequence[(self.n + c - 1) % self.n].id()] =
+            true;
+        self.cache.dont_look_bits[new_solution.route.sequence[(self.n + d - 1) % self.n].id()] =
+            true;
+
+        self.cache.dont_look_bits[new_solution.route.sequence[b].id()] = true;
+        self.cache.dont_look_bits[new_solution.route.sequence[c].id()] = true;
+        self.cache.dont_look_bits[new_solution.route.sequence[d].id()] = true;
+    }
+
+    /// apply double bridge move n times and choose the best one.
+    fn double_bridge_kick_v2(&mut self) {
+        self.update_best_solution();
+
+        let mut new_solution = self.solution_manager.best_solution.clone();
+        let mut best_delta: Option<i64> = None;
+        let mut best_random_nums = None;
+        for _ in 0..self.n {
+            let mut random_numbers = (0..4)
+                .map(|_| self.rng.random_range(0..self.n))
+                .collect::<Vec<usize>>();
+            random_numbers.sort();
+            let curr_dist: i64 = random_numbers
+                .iter()
+                .map(|&i| {
+                    self.penalizer
+                        .distance_matrix
+                        .distance(new_solution.route[i], new_solution.route[(i + 1) % self.n])
+                })
+                .sum();
+
+            let new_dist: i64 = (0..4)
+                .map(|i| {
+                    self.penalizer.distance_matrix.distance(
+                        new_solution.route[random_numbers[i]],
+                        new_solution.route[(random_numbers[(i + 2) % 4] + 1) % self.n],
+                    )
+                })
+                .sum();
+            match best_delta {
+                None => {
+                    best_delta = Some(new_dist - curr_dist);
+                    best_random_nums = Some(random_numbers.clone());
+                }
+                Some(delta) => {
+                    if delta > new_dist - curr_dist {
+                        best_delta = Some(new_dist - curr_dist);
+                        best_random_nums = Some(random_numbers.clone());
+                    }
+                }
+            }
+        }
+        let random_numbers: Vec<usize> = best_random_nums.unwrap();
+        let a = 0;
+        let b = random_numbers[1] - random_numbers[0];
+        let c = random_numbers[2] - random_numbers[0];
+        let d = random_numbers[3] - random_numbers[0];
+        new_solution.route.sequence.rotate_left(random_numbers[0]);
+        new_solution.route.sequence[a..b].reverse();
+        new_solution.route.sequence[b..c].reverse();
+        new_solution.route.sequence[c..d].reverse();
+        new_solution.route.sequence[d..].reverse();
+        self.solution_manager.current_solution = self.penalizer.penalize(&new_solution.route);
     }
 
     /// function for solving the tsp
@@ -273,7 +340,7 @@ mod tests {
             .map(|(x, y)| {
                 city_coordinates
                     .iter()
-                    .map(|(a, b)| (((x - a) * (x - a) + (y - b) * (y - b)) as u64).isqrt())
+                    .map(|(a, b)| (((x - a) * (x - a) + (y - b) * (y - b)) as i64).isqrt())
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();

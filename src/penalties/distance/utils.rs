@@ -6,7 +6,7 @@ fn get_reverse_index(m: usize, n: usize) -> usize {
 }
 
 /// given a flat matrix and dimension n,check that it is symmetric
-pub(super) fn is_symmetric(flat_matrix: &[u64], n: usize) -> bool {
+pub(super) fn is_symmetric(flat_matrix: &[i64], n: usize) -> bool {
     flat_matrix.len() == n * n
         && flat_matrix
             .iter()
@@ -14,12 +14,12 @@ pub(super) fn is_symmetric(flat_matrix: &[u64], n: usize) -> bool {
             .all(|(m, val)| *val == flat_matrix[get_reverse_index(m, n)])
 }
 
-pub(super) fn flatten(matrix: Vec<Vec<u64>>) -> Vec<u64> {
+pub(super) fn flatten(matrix: Vec<Vec<i64>>) -> Vec<i64> {
     matrix
         .iter()
         .flat_map(|row| row.iter())
         .copied()
-        .collect::<Vec<u64>>()
+        .collect::<Vec<i64>>()
 }
 
 #[cfg(test)]

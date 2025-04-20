@@ -1,5 +1,5 @@
 /// Implement the 2-opt algorithm for the TSP
-fn two_opt(distance_matrix: &[Vec<u64>], time_limit: Option<f64>) -> (Vec<usize>, u64, usize) {
+fn two_opt(distance_matrix: &[Vec<i64>], time_limit: Option<f64>) -> (Vec<usize>, u64, usize) {
     let n = distance_matrix.len();
 
     // Start with a simple tour: 0, 1, 2, ..., n-1

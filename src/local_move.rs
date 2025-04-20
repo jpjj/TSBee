@@ -61,6 +61,10 @@ impl<'a> LocalSearch<'a> {
         }
 
         for (c1_pos, c1) in sequence.iter().enumerate() {
+            if dlb && !self.dont_look_bits[c1.id()] {
+                continue;
+            }
+            self.dont_look_bits[c1.id()] = false;
             let c2 = pred[c1_pos];
             let c2_pos = (n - 1 + c1_pos) % n;
             let dist1 = self.distance_matrix.distance(*c1, c2);
@@ -91,6 +95,11 @@ impl<'a> LocalSearch<'a> {
                                 dist1 + dist3 - (dist2 + dist4),
                             );
                             // self.assert_correct_change(&current_solution);
+                            self.dont_look_bits[c1.id()] = true;
+                            self.dont_look_bits[c2.id()] = true;
+                            self.dont_look_bits[c3.id()] = true;
+                            self.dont_look_bits[c4.id()] = true;
+
                             return current_solution;
                         }
 
@@ -131,6 +140,12 @@ impl<'a> LocalSearch<'a> {
                                     );
                                     // self.assert_correct_change(&current_solution);
 
+                                    self.dont_look_bits[c1.id()] = true;
+                                    self.dont_look_bits[c2.id()] = true;
+                                    self.dont_look_bits[c3.id()] = true;
+                                    self.dont_look_bits[c4.id()] = true;
+                                    self.dont_look_bits[c5.id()] = true;
+                                    self.dont_look_bits[c6.id()] = true;
                                     return current_solution;
                                 }
                             } else {
@@ -155,6 +170,12 @@ impl<'a> LocalSearch<'a> {
                                     );
                                     // self.assert_correct_change(&current_solution);
 
+                                    self.dont_look_bits[c1.id()] = true;
+                                    self.dont_look_bits[c2.id()] = true;
+                                    self.dont_look_bits[c3.id()] = true;
+                                    self.dont_look_bits[c4.id()] = true;
+                                    self.dont_look_bits[c5.id()] = true;
+                                    self.dont_look_bits[c6.id()] = true;
                                     return current_solution;
                                 }
                             }
@@ -201,6 +222,12 @@ impl<'a> LocalSearch<'a> {
                                                 dist1 + dist3 + dist5 - (dist2 + dist4 + dist6),
                                             );
                                             // self.assert_correct_change(&current_solution);
+                                            self.dont_look_bits[c1.id()] = true;
+                                            self.dont_look_bits[c2.id()] = true;
+                                            self.dont_look_bits[c3.id()] = true;
+                                            self.dont_look_bits[c4.id()] = true;
+                                            self.dont_look_bits[c5.id()] = true;
+                                            self.dont_look_bits[c6.id()] = true;
                                             return current_solution;
                                         } else {
                                             if c5 == c3 {
@@ -221,6 +248,12 @@ impl<'a> LocalSearch<'a> {
                                                 dist1 + dist3 + dist5 - (dist2 + dist4 + dist6),
                                             );
                                             // self.assert_correct_change(&current_solution);
+                                            self.dont_look_bits[c1.id()] = true;
+                                            self.dont_look_bits[c2.id()] = true;
+                                            self.dont_look_bits[c3.id()] = true;
+                                            self.dont_look_bits[c4.id()] = true;
+                                            self.dont_look_bits[c5.id()] = true;
+                                            self.dont_look_bits[c6.id()] = true;
                                             return current_solution;
                                         }
                                     }
