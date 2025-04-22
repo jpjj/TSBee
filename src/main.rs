@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(43);
     // let mut solutions = vec![];
     let number_trials = 10;
-    let problem_size = 1000;
+    let problem_size = 3000;
     let square_width = 1000;
     for i in 0..number_trials {
         // if i % 100 == 0 {
@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             })
             .collect::<Vec<_>>();
 
-        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), Some(1.0));
+        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), Some(10.0));
         let input: Input = raw_input.into();
         let mut solver = Solver::new(input);
 
@@ -54,17 +54,28 @@ fn main() -> Result<(), Box<dyn Error>> {
         let sol1 = solver.solve(true);
         let duration = Instant::now().checked_duration_since(start);
         println!("Time elapsed dlb: {:?}", duration);
+        println!("Iterations in total dlb: {:?}", sol1.stats.iterations);
 
-        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), Some(1.0));
+        println!(
+            "Iterations since last improvement dlb: {:?}",
+            sol1.stats.iterations_since_last_improvement
+        );
+        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), Some(10.0));
 
         let input: Input = raw_input.into();
         let mut solver = Solver::new(input);
 
         let start = Instant::now();
-        let sol2 = solver.solve(true);
+        let sol2 = solver.solve(false);
 
         let duration = Instant::now().checked_duration_since(start);
         println!("Time elapsed no dlb: {:?}", duration);
+        println!("Iterations in total no dlb: {:?}", sol2.stats.iterations);
+
+        println!(
+            "Iterations since last improvement no dlb: {:?}",
+            sol2.stats.iterations_since_last_improvement
+        );
         if sol1.best_solution != sol2.best_solution {
             let precent_gap =
                 (sol1.best_solution.distance as f64 / sol2.best_solution.distance as f64 - 1.0)
