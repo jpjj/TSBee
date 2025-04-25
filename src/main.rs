@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(43);
     // let mut solutions = vec![];
     let number_trials = 10;
-    let problem_size = 3000;
+    let problem_size = 1000;
     let square_width = 1000;
     for i in 0..number_trials {
         // if i % 100 == 0 {

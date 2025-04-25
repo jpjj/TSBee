@@ -10,11 +10,14 @@ use crate::input::Input;
 use crate::local_move::LocalSearch;
 use crate::penalties::candidates::alpha_nearness::get_alpha_candidates;
 use crate::penalties::candidates::candidate_set::get_nn_candidates;
+use crate::penalties::candidates::held_karp::{get_dm_with_pi, BoundCalculator};
 use crate::penalties::candidates::Candidates;
 use crate::penalties::distance::DistancePenalizer;
 
 use cache::SolverCache;
+use chrono::TimeDelta;
 use parameters::Parameters;
+use petgraph::visit::Time;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use solution_manager::SolutionManager;
@@ -254,8 +257,34 @@ impl Solver {
             if self.one_time() {
                 break;
             }
-            // diversification
-            self.double_bridge_kick();
+            if self.stats.iterations == 0 {
+                let upper_bound = self.solution_manager.best_solution.distance;
+                let max_iterations = 1000;
+                // geben wir uns die hälfte der Zeit, die noch übrig ist.
+                let max_time = match self.parameters.max_time {
+                    Some(time) => (time - (chrono::Utc::now() - self.stats.start_time)) / 2,
+                    None => TimeDelta::seconds(1),
+                };
+                let mut held_karp_calculator = BoundCalculator::new(
+                    self.penalizer.distance_matrix.clone(),
+                    upper_bound,
+                    max_iterations,
+                    max_time,
+                );
+                let held_carp_result = held_karp_calculator.run();
+                if held_carp_result.optimal {
+                    println!("optimal")
+                }
+                self.candidates = get_alpha_candidates(
+                    &get_dm_with_pi(&self.penalizer.distance_matrix, &held_carp_result.pi),
+                    10,
+                );
+                // self.penalizer.distance_matrix =
+                //     get_dm_with_pi(&self.penalizer.distance_matrix, &held_carp_result.pi);
+            } else {
+                // diversification
+                self.double_bridge_kick();
+            }
         }
         self.stats.time_taken = chrono::Utc::now() - self.stats.start_time;
         self.get_solution_report()

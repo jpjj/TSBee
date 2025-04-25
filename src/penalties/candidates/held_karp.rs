@@ -29,13 +29,17 @@ impl HeldKarpResult {
 }
 
 impl BoundCalculator {
-    pub fn new(distance_matrix: DistanceMatrix, upper_bound: i64) -> Self {
-        let n = distance_matrix.len();
+    pub fn new(
+        distance_matrix: DistanceMatrix,
+        upper_bound: i64,
+        max_iterations: u64,
+        max_time: chrono::Duration,
+    ) -> Self {
         Self {
             distance_matrix,
             upper_bound,
-            max_iterations: 3000,
-            max_time: chrono::Duration::seconds(1),
+            max_iterations: max_iterations,
+            max_time: max_time,
         }
     }
 
@@ -55,18 +59,25 @@ impl BoundCalculator {
         let mut lower_bound_best = i64::min_value();
         let mut iterations = 0;
         let mut iterations_since_last_improvement_or_beta_change = 0;
-        let mut beta = 1.0;
+        let mut beta = 2.0;
         let mut pi = vec![0; n];
         let mut best_pi = pi.clone();
         let mut best_min_1_tree = get_min_1_tree(&self.distance_matrix);
+        let mut min_1_tree = best_min_1_tree.clone();
+        let start = chrono::Utc::now();
 
-        while iterations < self.max_iterations {
-            iterations += 1;
-            iterations_since_last_improvement_or_beta_change += 1;
-            let temp_dm = get_dm_with_pi(&self.distance_matrix, &pi);
-            // 1
-            let min_1_tree = get_min_1_tree(&temp_dm);
-            // 2
+        while iterations < self.max_iterations && chrono::Utc::now() - start < self.max_time {
+            if iterations == 0 || iterations_since_last_improvement_or_beta_change > 10 {
+                beta /= 2.0;
+                iterations_since_last_improvement_or_beta_change = 0;
+                pi = best_pi.clone();
+                min_1_tree = best_min_1_tree.clone();
+            } else {
+                let temp_dm = get_dm_with_pi(&self.distance_matrix, &pi);
+                // 1
+                min_1_tree = get_min_1_tree(&temp_dm);
+                // 2
+            }
             let lower_bound = min_1_tree.score;
             if lower_bound > lower_bound_best {
                 lower_bound_best = lower_bound;
@@ -81,12 +92,6 @@ impl BoundCalculator {
                 // all degrees are two, so we found a min 1-tree that is a hamiltonian cycle, optimal solution found.
                 return HeldKarpResult::new(pi, min_1_tree, true);
             }
-            if iterations_since_last_improvement_or_beta_change > 10 {
-                beta /= 2.0;
-                iterations_since_last_improvement_or_beta_change = 0;
-                pi = best_pi.clone();
-                continue;
-            }
             // 4
             let t = beta * (self.upper_bound - lower_bound) as f64
                 / g.iter().map(|x| x * x).sum::<i32>() as f64;
@@ -96,12 +101,14 @@ impl BoundCalculator {
                 .enumerate()
                 .map(|(i, pi)| (*pi as f64 + t * g[i] as f64) as i64)
                 .collect();
+            iterations += 1;
+            iterations_since_last_improvement_or_beta_change += 1;
         }
         HeldKarpResult::new(best_pi, best_min_1_tree, false)
     }
 }
 
-fn get_dm_with_pi(dm: &DistanceMatrix, pi: &[i64]) -> DistanceMatrix {
+pub fn get_dm_with_pi(dm: &DistanceMatrix, pi: &[i64]) -> DistanceMatrix {
     let n = dm.len();
     let mut flat_matrix = vec![0; n * n];
     for k in 0..n * n {

@@ -1,3 +1,4 @@
+use chrono::TimeDelta;
 use tsp_solve::penalties::{candidates::held_karp::BoundCalculator, distance::DistanceMatrix};
 
 #[test]
@@ -59,7 +60,7 @@ fn held_karp_on_berlin52() {
     let dm = DistanceMatrix::new_euclidian(points);
 
     let upper_bound = 786510;
-    let mut bound_calculator = BoundCalculator::new(dm, upper_bound);
+    let mut bound_calculator = BoundCalculator::new(dm, upper_bound, 200, TimeDelta::seconds(1));
     let result = bound_calculator.run();
     assert!(result.optimal)
 }
