@@ -42,7 +42,7 @@ impl Solver {
 
         let solution_manager = SolutionManager::new(current_solution);
         let stats = Stats::new();
-        let parameters = Parameters::new(None, time_limit, None, Some(20));
+        let parameters = Parameters::new(None, time_limit, None, Some(10));
         let max_neighbors = match parameters.max_neighbors {
             Some(limit) => limit,
             _ => n,

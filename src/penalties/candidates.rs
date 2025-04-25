@@ -2,6 +2,8 @@ use crate::domain::city::City;
 
 pub mod alpha_nearness;
 pub mod candidate_set;
+pub mod held_karp;
+mod min_one_tree;
 mod min_spanning_tree;
 pub mod utils;
 pub(crate) struct Candidates {

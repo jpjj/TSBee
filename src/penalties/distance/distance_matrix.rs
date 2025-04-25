@@ -5,7 +5,7 @@ use super::utils::{euclid_distance, flatten, is_symmetric};
 pub struct DistanceMatrix {
     n: usize,
     flat_matrix: Vec<i64>,
-    symmetric: bool,
+    symmetric: Option<bool>,
 }
 
 impl DistanceMatrix {
@@ -13,12 +13,11 @@ impl DistanceMatrix {
         let n = matrix.len();
 
         let flat_matrix = flatten(matrix);
-        let symmetric = is_symmetric(&flat_matrix, n);
 
         DistanceMatrix {
             n,
             flat_matrix,
-            symmetric,
+            symmetric: None,
         }
     }
 
@@ -32,6 +31,17 @@ impl DistanceMatrix {
             })
             .collect();
         Self::new(matrix)
+    }
+
+    pub fn from_flat(flat_matrix: Vec<i64>) -> DistanceMatrix {
+        let n_squared = flat_matrix.len();
+        let n = n_squared.isqrt();
+        assert_eq!(n * n, n_squared);
+        DistanceMatrix {
+            n,
+            flat_matrix,
+            symmetric: None,
+        }
     }
 
     pub fn row(&self, i: usize) -> &[i64] {
@@ -52,7 +62,10 @@ impl DistanceMatrix {
     }
 
     pub fn is_symmetric(&self) -> bool {
-        self.symmetric
+        match self.symmetric {
+            None => is_symmetric(&self.flat_matrix, self.n),
+            Some(symmetric) => symmetric,
+        }
     }
 }
 

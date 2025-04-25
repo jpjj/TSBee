@@ -3,10 +3,67 @@ use std::cmp::{max, min};
 use crate::{domain::city::City, penalties::distance::DistanceMatrix};
 
 use super::{
-    candidate_set::{self, get_nn_candidates},
+    candidate_set::get_nn_candidates,
+    min_spanning_tree::MinSpanningTree,
     utils::{get_k_argmins_ordered, get_min_spanning_tree},
     Candidates,
 };
+
+fn get_topo_order(spanning_tree: MinSpanningTree, n: usize) -> (Vec<City>, Vec<City>) {
+    let topo_order: Vec<City> = (0..n - 1)
+        .map(|i| match i {
+            0 => City(0),
+            j => spanning_tree.edges[j - 1].1,
+        })
+        .collect();
+    let mut pred = vec![City(0); n - 1];
+    for (city1, city2) in spanning_tree.edges {
+        pred[city2.id()] = city1;
+    }
+    (topo_order, pred)
+}
+
+fn get_beta_values(
+    dm: &DistanceMatrix,
+    topo_order: Vec<City>,
+    pred: Vec<City>,
+    n: usize,
+    two_nearest_neighbors: Vec<usize>,
+) -> Vec<i64> {
+    let mut beta_values: Vec<i64> = vec![0; n * n];
+    for (i, c1) in topo_order.iter().enumerate() {
+        for (_, c2) in topo_order[i + 1..].iter().enumerate() {
+            beta_values[c1.id() * n + c2.id()] = max(
+                beta_values[c1.id() * n + pred[c2.id()].id()],
+                dm.distance(*c2, pred[c2.id()]),
+            );
+            beta_values[c2.id() * n + c1.id()] = beta_values[c1.id() * n + c2.id()];
+        }
+    }
+    // take care of n-1 node
+    // we have to subtract the nearest distance if we have the nearest neighbor. Nothing changes when we have to have this guy
+    // for the others, we have to subtract the second closest later.
+    for i in 0..n - 1 {
+        beta_values[(n - 1) * n + i] = if i == two_nearest_neighbors[0] {
+            dm.distance(City(n - 1), City(two_nearest_neighbors[0]))
+        } else {
+            dm.distance(City(n - 1), City(two_nearest_neighbors[1]))
+        };
+        beta_values[i * n + n - 1] = beta_values[(n - 1) * n + i]
+    }
+    beta_values
+}
+
+fn get_alpha_values(dm: &DistanceMatrix, beta_values: Vec<i64>, n: usize) -> Vec<i64> {
+    let mut alpha_values: Vec<i64> = beta_values;
+    for i in 0..n {
+        for j in i + 1..n {
+            alpha_values[i * n + j] = dm.distance(City(i), City(j)) - alpha_values[i * n + j];
+            alpha_values[j * n + i] = alpha_values[i * n + j];
+        }
+    }
+    alpha_values
+}
 
 /// 1. Create min-spanning tree von G \ {n - 1}
 /// 2. Add the two longest edges
@@ -19,51 +76,16 @@ pub fn get_alpha_candidates(distance_matrix: &DistanceMatrix, k: usize) -> Candi
     // 2
     let two_nearest_neighbors = get_k_argmins_ordered(distance_matrix.row(n - 1), 2, Some(n - 1));
     // // 3.1 create topo order and predecessors
-    let topo_order: Vec<City> = (0..n - 1)
-        .map(|i| match i {
-            0 => City(0),
-            j => spanning_tree.edges[j - 1].1,
-        })
-        .collect();
-    let mut pred = vec![City(0); n - 1];
-    for (city1, city2) in spanning_tree.edges {
-        pred[city2.id()] = city1;
-    }
+    let (topo_order, pred) = get_topo_order(spanning_tree, n);
 
     // 3.2 create beta values
     // the topo order ensures that beta_values[i][pred[j].id()] always has been computed before.
     // for the very first iterations, of the inner for loop, i = pred[j], so the maximum is always the second value.
     // this is fine, since it belongs to the min span tree. Hence, the subtraction later becomes 0.
-    let mut beta_values: Vec<Vec<i64>> = vec![vec![0; n]; n];
-    for (i, city_i) in topo_order.iter().enumerate() {
-        for (p, city_j) in topo_order[i + 1..].iter().enumerate() {
-            let j = i + p + 1;
-            beta_values[city_i.id()][city_j.id()] = max(
-                beta_values[city_i.id()][pred[city_j.id()].id()],
-                distance_matrix.distance(City(city_j.id()), pred[city_j.id()]),
-            );
-            beta_values[city_j.id()][city_i.id()] = beta_values[city_i.id()][city_j.id()];
-        }
-    }
-    // take care of n-1 node
-    // we have to subtract the nearest distance if we have the nearest neighbor. Nothing changes when we have to have this guy
-    // for the others, we have to subtract the second closest later.
-    for i in 0..n - 1 {
-        beta_values[n - 1][i] = if i == two_nearest_neighbors[0] {
-            distance_matrix.distance(City(n - 1), City(two_nearest_neighbors[0]))
-        } else {
-            distance_matrix.distance(City(n - 1), City(two_nearest_neighbors[1]))
-        };
-        beta_values[i][n - 1] = beta_values[n - 1][i]
-    }
-    let mut alpha_values: Vec<Vec<i64>> = vec![vec![0; n]; n];
-    for i in 0..n {
-        for j in i + 1..n {
-            alpha_values[i][j] = distance_matrix.distance(City(i), City(j)) - beta_values[i][j];
-            alpha_values[j][i] = alpha_values[i][j];
-        }
-    }
-    let alpha_distance_matrix = DistanceMatrix::new(alpha_values);
+    let beta_values = get_beta_values(&distance_matrix, topo_order, pred, n, two_nearest_neighbors);
+
+    let alpha_values = get_alpha_values(&distance_matrix, beta_values, n);
+    let alpha_distance_matrix = DistanceMatrix::from_flat(alpha_values);
     get_nn_candidates(&alpha_distance_matrix, k)
 }
 
