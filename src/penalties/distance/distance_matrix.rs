@@ -1,6 +1,6 @@
 use crate::domain::city::City;
 
-use super::utils::{flatten, is_symmetric};
+use super::utils::{euclid_distance, flatten, is_symmetric};
 #[derive(Clone)]
 pub struct DistanceMatrix {
     n: usize,
@@ -20,6 +20,18 @@ impl DistanceMatrix {
             flat_matrix,
             symmetric,
         }
+    }
+
+    pub fn new_euclidian(points: Vec<(i64, i64)>) -> DistanceMatrix {
+        let n = points.len();
+        let matrix = (0..n)
+            .map(|i| {
+                (0..n)
+                    .map(|j| euclid_distance(points[i], points[j]))
+                    .collect()
+            })
+            .collect();
+        Self::new(matrix)
     }
 
     pub fn row(&self, i: usize) -> &[i64] {

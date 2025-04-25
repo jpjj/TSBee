@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             })
             .collect::<Vec<_>>();
 
-        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), Some(10.0));
+        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), Some(1.0));
         let input: Input = raw_input.into();
         let mut solver = Solver::new(input);
 
@@ -60,7 +60,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             "Iterations since last improvement dlb: {:?}",
             sol1.stats.iterations_since_last_improvement
         );
-        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), Some(10.0));
+        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), Some(1.0));
 
         let input: Input = raw_input.into();
         let mut solver = Solver::new(input);

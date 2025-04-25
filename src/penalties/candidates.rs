@@ -1,8 +1,9 @@
 use crate::domain::city::City;
 
+pub mod alpha_nearness;
 pub mod candidate_set;
+mod min_spanning_tree;
 pub mod utils;
-
 pub(crate) struct Candidates {
     candidates: Vec<Vec<City>>,
 }

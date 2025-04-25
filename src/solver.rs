@@ -8,6 +8,7 @@ use crate::domain::city::City;
 use crate::domain::route::Route;
 use crate::input::Input;
 use crate::local_move::LocalSearch;
+use crate::penalties::candidates::alpha_nearness::get_alpha_candidates;
 use crate::penalties::candidates::candidate_set::get_nn_candidates;
 use crate::penalties::candidates::Candidates;
 use crate::penalties::distance::DistancePenalizer;
@@ -46,7 +47,7 @@ impl Solver {
             Some(limit) => limit,
             _ => n,
         };
-        let candidates = get_nn_candidates(&penalizer.distance_matrix, max_neighbors);
+        let candidates = get_alpha_candidates(&penalizer.distance_matrix, max_neighbors);
         let cache = SolverCache::new(n);
         let rng = StdRng::seed_from_u64(42);
         Solver {
