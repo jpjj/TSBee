@@ -1,5 +1,3 @@
-use pyo3::types::iter;
-
 use crate::{domain::city::City, penalties::distance::DistanceMatrix};
 
 use super::{
@@ -7,17 +5,17 @@ use super::{
     utils::{get_k_argmins_ordered, get_min_spanning_tree},
 };
 
-struct BoundCalculator {
+pub struct BoundCalculator {
     distance_matrix: DistanceMatrix,
     upper_bound: i64,
     max_iterations: u64,
     max_time: chrono::Duration,
 }
 
-struct HeldKarpResult {
-    pi: Vec<i64>,
-    min_one_tree: MinOneTree,
-    optimal: bool,
+pub struct HeldKarpResult {
+    pub pi: Vec<i64>,
+    pub min_one_tree: MinOneTree,
+    pub optimal: bool,
 }
 
 impl HeldKarpResult {
@@ -36,7 +34,7 @@ impl BoundCalculator {
         Self {
             distance_matrix,
             upper_bound,
-            max_iterations: 100,
+            max_iterations: 3000,
             max_time: chrono::Duration::seconds(1),
         }
     }
@@ -57,13 +55,14 @@ impl BoundCalculator {
         let mut lower_bound_best = i64::min_value();
         let mut iterations = 0;
         let mut iterations_since_last_improvement_or_beta_change = 0;
-        let mut beta = 2.0;
+        let mut beta = 1.0;
         let mut pi = vec![0; n];
         let mut best_pi = pi.clone();
         let mut best_min_1_tree = get_min_1_tree(&self.distance_matrix);
 
         while iterations < self.max_iterations {
             iterations += 1;
+            iterations_since_last_improvement_or_beta_change += 1;
             let temp_dm = get_dm_with_pi(&self.distance_matrix, &pi);
             // 1
             let min_1_tree = get_min_1_tree(&temp_dm);
@@ -85,6 +84,8 @@ impl BoundCalculator {
             if iterations_since_last_improvement_or_beta_change > 10 {
                 beta /= 2.0;
                 iterations_since_last_improvement_or_beta_change = 0;
+                pi = best_pi.clone();
+                continue;
             }
             // 4
             let t = beta * (self.upper_bound - lower_bound) as f64

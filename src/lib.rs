@@ -1,7 +1,7 @@
 mod domain;
 mod input;
 mod local_move;
-mod penalties;
+pub mod penalties;
 mod postprocess;
 mod preprocess;
 mod solution;
