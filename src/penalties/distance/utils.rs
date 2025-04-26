@@ -23,7 +23,7 @@ pub(super) fn flatten(matrix: Vec<Vec<i64>>) -> Vec<i64> {
 }
 
 pub(super) fn euclid_distance(a: (i64, i64), b: (i64, i64)) -> i64 {
-    (10000 * ((a.0 - b.0) * (a.0 - b.0) + (a.1 - b.1) * (a.1 - b.1))).isqrt()
+    (1_000_000 * ((a.0 - b.0) * (a.0 - b.0) + (a.1 - b.1) * (a.1 - b.1))).isqrt()
 }
 
 #[cfg(test)]

@@ -97,12 +97,18 @@ impl BoundCalculator {
             // 4
             let t = beta * (self.upper_bound - lower_bound) as f64
                 / g.iter().map(|x| x * x).sum::<i32>() as f64;
+
             // 5
-            pi = pi
+            let pi_new = pi
                 .iter()
                 .enumerate()
                 .map(|(i, pi)| (*pi as f64 + t * g[i] as f64) as i64)
                 .collect();
+            if pi == pi_new {
+                println!("no change");
+                return HeldKarpResult::new(best_pi, best_min_1_tree, false);
+            }
+            pi = pi_new;
             iterations += 1;
             iterations_since_last_improvement_or_beta_change += 1;
         }

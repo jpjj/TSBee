@@ -256,9 +256,9 @@ impl Solver {
             if self.one_time() {
                 break;
             }
-            if self.stats.iterations == 0 {
+            if self.stats.iterations == 1 {
                 let upper_bound = self.solution_manager.best_solution.distance;
-                let max_iterations = 1000;
+                let max_iterations = 10000;
                 // geben wir uns die hälfte der Zeit, die noch übrig ist.
                 let max_time = match self.parameters.max_time {
                     Some(time) => (time - (chrono::Utc::now() - self.stats.start_time)) / 2,
@@ -277,10 +277,11 @@ impl Solver {
                 self.penalizer
                     .distance_matrix
                     .update_pi(held_carp_result.pi.clone());
-                self.candidates = get_alpha_candidates(&self.penalizer.distance_matrix, 10);
+                self.candidates = get_alpha_candidates(&self.penalizer.distance_matrix, 5);
                 self.stats.held_karp_result = Some(held_carp_result);
             } else {
                 // diversification
+                self.double_bridge_kick();
                 self.double_bridge_kick();
             }
         }
