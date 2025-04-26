@@ -5,6 +5,7 @@ use super::utils::{euclid_distance, flatten, is_symmetric};
 pub struct DistanceMatrix {
     n: usize,
     flat_matrix: Vec<i64>,
+    pi: Option<Vec<i64>>,
     symmetric: Option<bool>,
 }
 
@@ -17,6 +18,7 @@ impl DistanceMatrix {
         DistanceMatrix {
             n,
             flat_matrix,
+            pi: None,
             symmetric: None,
         }
     }
@@ -40,6 +42,7 @@ impl DistanceMatrix {
         DistanceMatrix {
             n,
             flat_matrix,
+            pi: None,
             symmetric: None,
         }
     }
@@ -54,7 +57,14 @@ impl DistanceMatrix {
     }
 
     pub fn distance(&self, i: City, j: City) -> i64 {
-        self.flat_matrix[i.id() * self.n + j.id()]
+        match &self.pi {
+            None => self.flat_matrix[i.id() * self.n + j.id()],
+            Some(pi) => self.flat_matrix[i.id() * self.n + j.id()] + pi[i.id()] + pi[j.id()],
+        }
+    }
+
+    pub fn update_pi(&mut self, pi: Vec<i64>) {
+        self.pi = Some(pi)
     }
 
     pub fn len(&self) -> usize {

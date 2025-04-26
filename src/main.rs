@@ -8,6 +8,7 @@ mod solution;
 mod solver;
 use csv::Writer;
 use input::Input;
+use penalties::distance::DistanceMatrix;
 use rand::{self, rngs::StdRng, Rng, SeedableRng};
 use solver::Solver;
 use std::time::Instant;
@@ -17,8 +18,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(43);
     // let mut solutions = vec![];
     let number_trials = 10;
-    let problem_size = 1000;
-    let square_width = 1000;
+    let problem_size = 3000;
+    let square_width = 1_000_000;
     for i in 0..number_trials {
         // if i % 100 == 0 {
         //     println!("{}", i);
@@ -31,60 +32,40 @@ fn main() -> Result<(), Box<dyn Error>> {
                     rng.random_range(0..square_width),
                 )
             })
-            .collect::<Vec<(i32, i32)>>();
-        // city_coordinates = cities.clone();
-        // if i != 9665 {
-        //     continue;
-        // }
-        let distance_matrix = city_coordinates
-            .iter()
-            .map(|(x, y)| {
-                city_coordinates
-                    .iter()
-                    .map(|(a, b)| (((x - a) * (x - a) + (y - b) * (y - b)) as i64).isqrt())
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>();
-
-        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), Some(1.0));
-        let input: Input = raw_input.into();
+            .collect::<Vec<(i64, i64)>>();
+        let distance_matrix = DistanceMatrix::new_euclidian(city_coordinates);
+        let input: Input = Input::new(distance_matrix, Some(chrono::TimeDelta::seconds(2)));
         let mut solver = Solver::new(input);
 
         let start = Instant::now();
-        let sol1 = solver.solve(true);
+        let sol1 = solver.solve(false);
         let duration = Instant::now().checked_duration_since(start);
-        println!("Time elapsed dlb: {:?}", duration);
-        println!("Iterations in total dlb: {:?}", sol1.stats.iterations);
+        println!("Time elapsed: {:?}", duration);
+        println!("Iterations in total: {:?}", sol1.stats.iterations);
 
         println!(
-            "Iterations since last improvement dlb: {:?}",
+            "Iterations since last improvement: {:?}",
             sol1.stats.iterations_since_last_improvement
         );
-        let raw_input = preprocess::RawInput::new(distance_matrix.clone(), Some(1.0));
-
-        let input: Input = raw_input.into();
-        let mut solver = Solver::new(input);
-
-        let start = Instant::now();
-        let sol2 = solver.solve(false);
-
-        let duration = Instant::now().checked_duration_since(start);
-        println!("Time elapsed no dlb: {:?}", duration);
-        println!("Iterations in total no dlb: {:?}", sol2.stats.iterations);
-
-        println!(
-            "Iterations since last improvement no dlb: {:?}",
-            sol2.stats.iterations_since_last_improvement
-        );
-        if sol1.best_solution != sol2.best_solution {
-            let precent_gap =
-                (sol1.best_solution.distance as f64 / sol2.best_solution.distance as f64 - 1.0)
-                    * 100.0;
-            println!(
-                "different solutions detected at iteration {}: {:.2}.",
-                i, precent_gap
-            );
+        match sol1.stats.held_karp_result {
+            Some(result) => {
+                let precent_gap =
+                    (sol1.best_solution.distance as f64 / result.min_one_tree.score as f64 - 1.0)
+                        * 100.0;
+                println!("Held-karp-gap: {:.2}.", precent_gap);
+            }
+            None => {}
         }
+
+        // if sol1.best_solution != sol2.best_solution {
+        //     let precent_gap =
+        //         (sol1.best_solution.distance as f64 / sol2.best_solution.distance as f64 - 1.0)
+        //             * 100.0;
+        //     println!(
+        //         "different solutions detected at iteration {}: {:.2}.",
+        //         i, precent_gap
+        //     );
+        // }
     }
     // let distances = solutions
     //     .into_iter()

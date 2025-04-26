@@ -12,6 +12,7 @@ pub struct BoundCalculator {
     max_time: chrono::Duration,
 }
 
+#[derive(Clone)]
 pub struct HeldKarpResult {
     pub pi: Vec<i64>,
     pub min_one_tree: MinOneTree,
@@ -65,6 +66,7 @@ impl BoundCalculator {
         let mut best_min_1_tree = get_min_1_tree(&self.distance_matrix);
         let mut min_1_tree = best_min_1_tree.clone();
         let start = chrono::Utc::now();
+        let mut temp_dm = self.distance_matrix.clone();
 
         while iterations < self.max_iterations && chrono::Utc::now() - start < self.max_time {
             if iterations == 0 || iterations_since_last_improvement_or_beta_change > 10 {
@@ -73,7 +75,7 @@ impl BoundCalculator {
                 pi = best_pi.clone();
                 min_1_tree = best_min_1_tree.clone();
             } else {
-                let temp_dm = get_dm_with_pi(&self.distance_matrix, &pi);
+                temp_dm.update_pi(pi.clone());
                 // 1
                 min_1_tree = get_min_1_tree(&temp_dm);
                 // 2
@@ -106,17 +108,6 @@ impl BoundCalculator {
         }
         HeldKarpResult::new(best_pi, best_min_1_tree, false)
     }
-}
-
-pub fn get_dm_with_pi(dm: &DistanceMatrix, pi: &[i64]) -> DistanceMatrix {
-    let n = dm.len();
-    let mut flat_matrix = vec![0; n * n];
-    for k in 0..n * n {
-        let i = k / n;
-        let j = k % n;
-        flat_matrix[k] = dm.distance(City(i), City(j)) + pi[i] + pi[j];
-    }
-    DistanceMatrix::from_flat(flat_matrix)
 }
 
 fn get_min_1_tree(distance_matrix: &DistanceMatrix) -> MinOneTree {

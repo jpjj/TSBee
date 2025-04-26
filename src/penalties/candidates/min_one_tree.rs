@@ -1,7 +1,7 @@
 use crate::domain::city::City;
 
 #[derive(Clone)]
-pub(super) struct MinOneTree {
+pub struct MinOneTree {
     pub score: i64,
     pub edges: Vec<(City, City)>,
 }

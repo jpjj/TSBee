@@ -10,14 +10,13 @@ use crate::input::Input;
 use crate::local_move::LocalSearch;
 use crate::penalties::candidates::alpha_nearness::get_alpha_candidates;
 use crate::penalties::candidates::candidate_set::get_nn_candidates;
-use crate::penalties::candidates::held_karp::{get_dm_with_pi, BoundCalculator};
+use crate::penalties::candidates::held_karp::BoundCalculator;
 use crate::penalties::candidates::Candidates;
 use crate::penalties::distance::DistancePenalizer;
 
 use cache::SolverCache;
 use chrono::TimeDelta;
 use parameters::Parameters;
-use petgraph::visit::Time;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use solution_manager::SolutionManager;
@@ -275,12 +274,11 @@ impl Solver {
                 if held_carp_result.optimal {
                     println!("optimal")
                 }
-                self.candidates = get_alpha_candidates(
-                    &get_dm_with_pi(&self.penalizer.distance_matrix, &held_carp_result.pi),
-                    10,
-                );
-                // self.penalizer.distance_matrix =
-                //     get_dm_with_pi(&self.penalizer.distance_matrix, &held_carp_result.pi);
+                self.penalizer
+                    .distance_matrix
+                    .update_pi(held_carp_result.pi.clone());
+                self.candidates = get_alpha_candidates(&self.penalizer.distance_matrix, 10);
+                self.stats.held_karp_result = Some(held_carp_result);
             } else {
                 // diversification
                 self.double_bridge_kick();

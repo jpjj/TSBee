@@ -86,7 +86,9 @@ pub fn get_alpha_candidates(distance_matrix: &DistanceMatrix, k: usize) -> Candi
 
     let alpha_values = get_alpha_values(&distance_matrix, beta_values, n);
     let alpha_distance_matrix = DistanceMatrix::from_flat(alpha_values);
-    get_nn_candidates(&alpha_distance_matrix, k)
+    let mut cans = get_nn_candidates(&alpha_distance_matrix, k);
+    cans.sort(distance_matrix);
+    return cans;
 }
 
 #[cfg(test)]
@@ -128,11 +130,11 @@ mod tests {
         );
         assert_eq!(
             candidates.get_neighbors_out(&City(4)),
-            vec![City(2), City(5), City(6)]
+            vec![City(5), City(6), City(2)]
         );
         assert_eq!(
             candidates.get_neighbors_out(&City(5)),
-            vec![City(3), City(4), City(7)]
+            vec![City(4), City(7), City(3),]
         );
         assert_eq!(
             candidates.get_neighbors_out(&City(6)),

@@ -1,3 +1,5 @@
+use crate::penalties::candidates::held_karp::HeldKarpResult;
+
 /// A struct to hold the statistics of the solver
 #[derive(Clone)]
 pub struct Stats {
@@ -5,6 +7,7 @@ pub struct Stats {
     pub time_taken: chrono::Duration,
     pub iterations: u64,
     pub iterations_since_last_improvement: u64,
+    pub held_karp_result: Option<HeldKarpResult>,
 }
 
 impl Stats {
@@ -18,6 +21,7 @@ impl Stats {
             time_taken,
             iterations,
             iterations_since_last_improvement,
+            held_karp_result: None,
         }
     }
 
