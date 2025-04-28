@@ -17,8 +17,8 @@ use std::{error::Error, fs::File};
 fn main() -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(43);
     // let mut solutions = vec![];
-    let number_trials = 1;
-    let problem_size = 10000;
+    let number_trials = 10;
+    let problem_size = 3000;
     let square_width = 1_000_000;
     for i in 0..number_trials {
         // if i % 100 == 0 {
@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             })
             .collect::<Vec<(i64, i64)>>();
         let distance_matrix = DistanceMatrix::new_euclidian(city_coordinates);
-        let input: Input = Input::new(distance_matrix, Some(chrono::TimeDelta::seconds(5)));
+        let input: Input = Input::new(distance_matrix, Some(chrono::TimeDelta::seconds(2)));
         let mut solver = Solver::new(input);
 
         let start = Instant::now();

@@ -12,6 +12,7 @@ use crate::{
 /// returns (n + pos_a - pos_b) % n
 /// Here, pos_a and pos_b are between 0 and n, two indices on a length n vector.
 /// Returns relative position given of pos_a giben pos_b would be 0
+#[inline(always)]
 fn get_rel_pos(pos_a: usize, pos_b: usize, n: usize) -> usize {
     return (n + pos_a - pos_b) % n;
 }
@@ -74,6 +75,7 @@ impl<'a> LocalSearch<'a> {
     pub(crate) fn execute_3opt(&mut self, dlb: bool) -> Solution {
         // preparation
         let mut current_solution = self.current_solution.clone();
+        // self.assert_correct_change(&current_solution);
         let sequence = current_solution.route.sequence.clone();
         let n = current_solution.route.len();
         let mut succ: Vec<City> = sequence.clone();
@@ -119,7 +121,7 @@ impl<'a> LocalSearch<'a> {
                                 c4_pos,
                                 dist1 + dist3 - (dist2 + dist4),
                             );
-                            self.assert_correct_change(&current_solution);
+                            // self.assert_correct_change(&current_solution);
                             self.dont_look_bits[c1.id()] = true;
                             self.dont_look_bits[c2.id()] = true;
                             self.dont_look_bits[c3.id()] = true;
@@ -163,7 +165,7 @@ impl<'a> LocalSearch<'a> {
                                     current_solution.distance.sub_assign(
                                         dist1 + dist3 + dist5 - (dist2 + dist4 + dist6),
                                     );
-                                    self.assert_correct_change(&current_solution);
+                                    // self.assert_correct_change(&current_solution);
 
                                     self.dont_look_bits[c1.id()] = true;
                                     self.dont_look_bits[c2.id()] = true;
@@ -193,7 +195,7 @@ impl<'a> LocalSearch<'a> {
                                     current_solution.distance.sub_assign(
                                         dist1 + dist3 + dist5 - (dist2 + dist4 + dist6),
                                     );
-                                    self.assert_correct_change(&current_solution);
+                                    // self.assert_correct_change(&current_solution);
 
                                     self.dont_look_bits[c1.id()] = true;
                                     self.dont_look_bits[c2.id()] = true;
@@ -246,7 +248,7 @@ impl<'a> LocalSearch<'a> {
                                             current_solution.distance.sub_assign(
                                                 dist1 + dist3 + dist5 - (dist2 + dist4 + dist6),
                                             );
-                                            self.assert_correct_change(&current_solution);
+                                            // self.assert_correct_change(&current_solution);
                                             self.dont_look_bits[c1.id()] = true;
                                             self.dont_look_bits[c2.id()] = true;
                                             self.dont_look_bits[c3.id()] = true;
@@ -272,7 +274,7 @@ impl<'a> LocalSearch<'a> {
                                             current_solution.distance.sub_assign(
                                                 dist1 + dist3 + dist5 - (dist2 + dist4 + dist6),
                                             );
-                                            self.assert_correct_change(&current_solution);
+                                            // self.assert_correct_change(&current_solution);
                                             self.dont_look_bits[c1.id()] = true;
                                             self.dont_look_bits[c2.id()] = true;
                                             self.dont_look_bits[c3.id()] = true;
@@ -304,6 +306,7 @@ impl<'a> LocalSearch<'a> {
     /// This is about whether a < b < c < d
     pub(crate) fn execute_double_bridge(&mut self) -> Solution {
         let mut current_solution = self.current_solution.clone();
+        // self.assert_correct_change(&current_solution);
         let sequence = current_solution.route.sequence.clone();
         let n = current_solution.route.len();
         let mut pred: Vec<City> = sequence.clone();
@@ -342,6 +345,19 @@ impl<'a> LocalSearch<'a> {
             if move1.gain >= 0 {
                 return current_solution;
             }
+            let c1 = move1.c1;
+            let c2 = move1.c2;
+            let c3 = move1.c3;
+            let c4 = move1.c4;
+            let c1_pos = city_to_route_pos[c1.id()];
+            let c2_pos = city_to_route_pos[c2.id()];
+            let c3_pos = city_to_route_pos[c3.id()];
+            let c4_pos = city_to_route_pos[c4.id()];
+            let c1_rel_pos = get_rel_pos(c1_pos, c1_pos, n);
+            let c2_rel_pos = get_rel_pos(c2_pos, c1_pos, n);
+            let c3_rel_pos = get_rel_pos(c3_pos, c1_pos, n);
+            let c4_rel_pos = get_rel_pos(c4_pos, c1_pos, n);
+
             for move2 in illegal_2opt_moves.iter().skip(idx + 1) {
                 let combined_gain = move1.gain + move2.gain;
                 if combined_gain >= 0 {
@@ -349,26 +365,17 @@ impl<'a> LocalSearch<'a> {
                 }
                 // combined gain must be negative, which is good.
                 // we have to check whether they can create a feasible tour.
-                let c1 = move1.c1;
-                let c2 = move1.c2;
-                let c3 = move1.c3;
-                let c4 = move1.c4;
+
                 let c5 = move2.c1;
                 // let c6 = move2.c2;
                 let c7 = move2.c3;
                 // let c8 = move2.c4;
-                let c1_pos = city_to_route_pos[c1.id()];
-                let c2_pos = city_to_route_pos[c2.id()];
-                let c3_pos = city_to_route_pos[c3.id()];
-                let c4_pos = city_to_route_pos[c4.id()];
+
                 let c5_pos = city_to_route_pos[c5.id()];
                 // let c6_pos = city_to_route_pos[c6.id()];
                 let c7_pos = city_to_route_pos[c7.id()];
                 // let c8_pos = city_to_route_pos[c8.id()];
-                let c1_rel_pos = get_rel_pos(c1_pos, c1_pos, n);
-                let c2_rel_pos = get_rel_pos(c2_pos, c1_pos, n);
-                let c3_rel_pos = get_rel_pos(c3_pos, c1_pos, n);
-                let c4_rel_pos = get_rel_pos(c4_pos, c1_pos, n);
+
                 let c5_rel_pos = get_rel_pos(c5_pos, c1_pos, n);
                 // let c6_rel_pos = get_rel_pos(c6_pos, c1_pos, n);
                 let c7_rel_pos = get_rel_pos(c7_pos, c1_pos, n);
@@ -390,8 +397,7 @@ impl<'a> LocalSearch<'a> {
                     current_solution.route.sequence[c7_rel_pos..].reverse();
                     // modify distance of current solution
                     current_solution.distance += combined_gain;
-                    self.assert_correct_change(&current_solution);
-                    println!("better double bridge move found");
+                    // self.assert_correct_change(&current_solution);
                     return current_solution;
                 }
 
@@ -411,8 +417,7 @@ impl<'a> LocalSearch<'a> {
                     current_solution.route.sequence[c5_rel_pos..].reverse();
                     // modify distance of current solution
                     current_solution.distance += combined_gain;
-                    self.assert_correct_change(&current_solution);
-                    println!("better double bridge move found");
+                    // self.assert_correct_change(&current_solution);
 
                     return current_solution;
                 }

@@ -150,17 +150,23 @@ impl Solver {
 
     fn double_bridge_kick(&mut self) {
         self.update_best_solution();
+        if self.stats.iterations_since_last_improvement == 0 {
+            let mut local_move = LocalSearch::new(
+                &self.penalizer.distance_matrix,
+                &self.candidates,
+                &self.solution_manager.best_solution,
+                &mut self.cache.dont_look_bits,
+            );
+            let new_solution = local_move.execute_double_bridge();
+            if new_solution < self.solution_manager.current_solution {
+                self.solution_manager.current_solution = new_solution;
+                self.update_best_solution();
 
-        let mut local_move = LocalSearch::new(
-            &self.penalizer.distance_matrix,
-            &self.candidates,
-            &self.solution_manager.current_solution,
-            &mut self.cache.dont_look_bits,
-        );
-        let new_solution = local_move.execute_double_bridge();
-        if new_solution < self.solution_manager.current_solution {
-            self.solution_manager.current_solution = new_solution;
-            return;
+                // if self.solution_manager.update_best() {
+                //     // println!("better double bridge move found");
+                // };
+                return;
+            }
         }
         let mut new_solution = self.solution_manager.best_solution.clone();
         let mut random_numbers = (0..4)
@@ -288,6 +294,12 @@ impl Solver {
                 self.penalizer
                     .distance_matrix
                     .update_pi(held_carp_result.pi.clone());
+                self.solution_manager.current_solution = self
+                    .penalizer
+                    .penalize(&self.solution_manager.best_solution.route);
+                self.solution_manager.best_solution = self
+                    .penalizer
+                    .penalize(&self.solution_manager.current_solution.route);
                 self.candidates = get_alpha_candidates_v2(&self.penalizer.distance_matrix, 5);
                 self.stats.held_karp_result = Some(held_carp_result);
             } else {

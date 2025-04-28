@@ -63,7 +63,7 @@ def run_experiment(sizes, seed=42):
 
         # Solve with tsp_solve
         start_time = time.time()
-        tsp_solve_solution = tsp_solve.solve(distance_matrix, 60.0)
+        tsp_solve_solution = tsp_solve.solve(distance_matrix, 2.0)
         tsp_solve_time = time.time() - start_time
 
         # Solve with fast_tsp
