@@ -188,7 +188,7 @@ impl Solver {
         let mut new_solution = self.solution_manager.best_solution.clone();
         let mut best_delta: Option<i64> = None;
         let mut best_random_nums = None;
-        for _ in 0..self.n {
+        for _ in 0..1000 {
             let mut random_numbers = (0..4)
                 .map(|_| self.rng.random_range(0..self.n))
                 .collect::<Vec<usize>>();
@@ -281,7 +281,7 @@ impl Solver {
                 self.stats.held_karp_result = Some(held_carp_result);
             } else {
                 // diversification
-                self.double_bridge_kick();
+                self.double_bridge_kick_v2();
             }
         }
         self.stats.time_taken = chrono::Utc::now() - self.stats.start_time;
