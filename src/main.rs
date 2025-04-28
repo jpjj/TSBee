@@ -17,9 +17,9 @@ use std::{error::Error, fs::File};
 fn main() -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(43);
     // let mut solutions = vec![];
-    let number_trials = 1;
-    let problem_size = 10000;
-    let square_width = 1_000_000;
+    let number_trials = 10;
+    let problem_size = 10;
+    let square_width = 1000;
     for i in 0..number_trials {
         // if i % 100 == 0 {
         //     println!("{}", i);
@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             })
             .collect::<Vec<(i64, i64)>>();
         let distance_matrix = DistanceMatrix::new_euclidian(city_coordinates);
-        let input: Input = Input::new(distance_matrix, Some(chrono::TimeDelta::seconds(5)));
+        let input: Input = Input::new(distance_matrix.clone(), Some(chrono::TimeDelta::seconds(1)));
         let mut solver = Solver::new(input);
 
         let start = Instant::now();
@@ -52,6 +52,29 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let precent_gap =
                     (sol1.best_solution.distance as f64 / result.min_one_tree.score as f64 - 1.0)
                         * 100.0;
+                if precent_gap < 0.0 {
+                    println!("Negative gap.");
+                    assert_eq!(
+                        (0..problem_size)
+                            .into_iter()
+                            .map(|i| solver.penalizer.distance_matrix.distance(
+                                sol1.best_solution.route.sequence[i],
+                                sol1.best_solution.route.sequence
+                                    [(problem_size + 1 + i) % problem_size]
+                            ))
+                            .sum::<i64>(),
+                        sol1.best_solution.distance
+                    );
+                    assert_eq!(
+                        result
+                            .min_one_tree
+                            .edges
+                            .into_iter()
+                            .map(|(a, b)| solver.penalizer.distance_matrix.distance(a, b))
+                            .sum::<i64>(),
+                        result.min_one_tree.score
+                    );
+                }
                 println!("Held-karp-gap: {:.2}.", precent_gap);
             }
             None => {}
