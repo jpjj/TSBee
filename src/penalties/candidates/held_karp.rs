@@ -64,7 +64,7 @@ impl BoundCalculator {
         let mut pi = vec![0; n];
         let mut best_pi = pi.clone();
         let mut best_min_1_tree = get_min_1_tree(&self.distance_matrix);
-        let mut min_1_tree = best_min_1_tree.clone();
+        let mut min_1_tree: MinOneTree;
         let start = chrono::Utc::now();
         let mut temp_dm = self.distance_matrix.clone();
 

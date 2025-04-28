@@ -8,7 +8,7 @@ use crate::domain::city::City;
 use crate::domain::route::Route;
 use crate::input::Input;
 use crate::local_move::LocalSearch;
-use crate::penalties::candidates::alpha_nearness::get_alpha_candidates;
+use crate::penalties::candidates::alpha_nearness::{get_alpha_candidates, get_alpha_candidates_v2};
 use crate::penalties::candidates::candidate_set::get_nn_candidates;
 use crate::penalties::candidates::held_karp::BoundCalculator;
 use crate::penalties::candidates::Candidates;
@@ -49,7 +49,7 @@ impl Solver {
             Some(limit) => limit,
             _ => n,
         };
-        let candidates = get_alpha_candidates(&penalizer.distance_matrix, max_neighbors);
+        let candidates = get_alpha_candidates_v2(&penalizer.distance_matrix, max_neighbors);
         let cache = SolverCache::new(n);
         let rng = StdRng::seed_from_u64(42);
         Solver {
@@ -277,11 +277,10 @@ impl Solver {
                 self.penalizer
                     .distance_matrix
                     .update_pi(held_carp_result.pi.clone());
-                self.candidates = get_alpha_candidates(&self.penalizer.distance_matrix, 5);
+                self.candidates = get_alpha_candidates_v2(&self.penalizer.distance_matrix, 5);
                 self.stats.held_karp_result = Some(held_carp_result);
             } else {
                 // diversification
-                self.double_bridge_kick();
                 self.double_bridge_kick();
             }
         }

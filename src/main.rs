@@ -17,8 +17,8 @@ use std::{error::Error, fs::File};
 fn main() -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(43);
     // let mut solutions = vec![];
-    let number_trials = 10;
-    let problem_size = 500;
+    let number_trials = 1;
+    let problem_size = 10000;
     let square_width = 1_000_000;
     for i in 0..number_trials {
         // if i % 100 == 0 {

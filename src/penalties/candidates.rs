@@ -8,6 +8,7 @@ pub mod held_karp;
 mod min_one_tree;
 mod min_spanning_tree;
 pub mod utils;
+#[derive(PartialEq, Debug)]
 pub(crate) struct Candidates {
     candidates: Vec<Vec<City>>,
 }
