@@ -25,7 +25,7 @@ use stats::Stats;
 
 pub struct Solver {
     n: usize,
-    penalizer: DistancePenalizer,
+    pub penalizer: DistancePenalizer,
     solution_manager: SolutionManager,
     stats: Stats,
     parameters: Parameters,
@@ -151,6 +151,17 @@ impl Solver {
     fn double_bridge_kick(&mut self) {
         self.update_best_solution();
 
+        let mut local_move = LocalSearch::new(
+            &self.penalizer.distance_matrix,
+            &self.candidates,
+            &self.solution_manager.current_solution,
+            &mut self.cache.dont_look_bits,
+        );
+        let new_solution = local_move.execute_double_bridge();
+        if new_solution < self.solution_manager.current_solution {
+            self.solution_manager.current_solution = new_solution;
+            return;
+        }
         let mut new_solution = self.solution_manager.best_solution.clone();
         let mut random_numbers = (0..4)
             .map(|_| self.rng.random_range(0..self.n))
@@ -281,7 +292,7 @@ impl Solver {
                 self.stats.held_karp_result = Some(held_carp_result);
             } else {
                 // diversification
-                self.double_bridge_kick_v2();
+                self.double_bridge_kick();
             }
         }
         self.stats.time_taken = chrono::Utc::now() - self.stats.start_time;
