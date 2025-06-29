@@ -1,4 +1,4 @@
-use crate::domain::city::City;
+use crate::{domain::city::City, penalties::distance::utils::att_distance};
 
 use super::utils::{euclid_distance, flatten, is_symmetric};
 #[derive(Clone)]
@@ -31,6 +31,14 @@ impl DistanceMatrix {
                     .map(|j| euclid_distance(points[i], points[j]))
                     .collect()
             })
+            .collect();
+        Self::new(matrix)
+    }
+
+    pub fn new_att(points: Vec<(i64, i64)>) -> DistanceMatrix {
+        let n = points.len();
+        let matrix = (0..n)
+            .map(|i| (0..n).map(|j| att_distance(points[i], points[j])).collect())
             .collect();
         Self::new(matrix)
     }

@@ -1,4 +1,4 @@
-mod domain;
+pub mod domain;
 mod input;
 mod local_move;
 pub mod penalties;

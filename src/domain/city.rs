@@ -1,9 +1,9 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct City(pub(crate) usize);
+pub struct City(pub usize);
 
 impl City {
     #[inline]
-    pub(crate) fn id(&self) -> usize {
+    pub fn id(&self) -> usize {
         self.0
     }
 }

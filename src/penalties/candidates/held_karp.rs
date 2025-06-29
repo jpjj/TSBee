@@ -105,7 +105,7 @@ impl BoundCalculator {
                 .map(|(i, pi)| (*pi as f64 + t * g[i] as f64) as i64)
                 .collect();
             if pi == pi_new {
-                println!("no change");
+                eprintln!("no change");
                 return HeldKarpResult::new(best_pi, best_min_1_tree, false);
             }
             pi = pi_new;

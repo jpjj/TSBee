@@ -11,6 +11,11 @@ impl Route {
     pub fn new(sequence: Vec<City>) -> Route {
         Route { sequence }
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.sequence.len() == 0
+    }
+
     pub fn len(&self) -> usize {
         self.sequence.len()
     }
