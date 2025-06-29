@@ -26,7 +26,11 @@ fn get_topo_order(spanning_tree: MinSpanningTree, n: usize) -> (Vec<City>, Vec<C
 /// 2. Add the two longest edges
 /// 3. calculate alpha nearness matrix
 /// 4. given that matrix, fill the candidates.
-pub(crate) fn get_alpha_candidates_v2(distance_matrix: &DistanceMatrix, k: usize) -> Candidates {
+pub fn get_alpha_candidates_v2(
+    distance_matrix: &DistanceMatrix,
+    k: usize,
+    sort: bool,
+) -> Candidates {
     let n = distance_matrix.len();
     // 1.
     let spanning_tree = get_min_spanning_tree(distance_matrix, n - 1);
@@ -97,7 +101,9 @@ pub(crate) fn get_alpha_candidates_v2(distance_matrix: &DistanceMatrix, k: usize
         .collect();
 
     let mut cans = Candidates::new(candidates);
-    cans.sort(distance_matrix);
+    if sort {
+        cans.sort(distance_matrix);
+    }
     cans
 }
 
@@ -121,7 +127,7 @@ mod tests {
         ];
         let distance_matrix = DistanceMatrix::new_euclidian(points);
         let k = 3;
-        let candidates = get_alpha_candidates_v2(&distance_matrix, k);
+        let candidates = get_alpha_candidates_v2(&distance_matrix, k, true);
         assert_eq!(
             candidates.get_neighbors_out(&City(0)),
             vec![City(1), City(2), City(3)]

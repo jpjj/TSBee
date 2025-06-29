@@ -8,7 +8,7 @@ mod min_one_tree;
 mod min_spanning_tree;
 pub mod utils;
 #[derive(PartialEq, Debug)]
-pub(crate) struct Candidates {
+pub struct Candidates {
     candidates: Vec<Vec<City>>,
 }
 
@@ -18,7 +18,7 @@ impl Candidates {
     }
 
     /// get the neighbors of a city
-    pub(crate) fn get_neighbors_out(&self, city: &City) -> &[City] {
+    pub fn get_neighbors_out(&self, city: &City) -> &[City] {
         &self.candidates[city.0]
     }
 

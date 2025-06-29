@@ -48,7 +48,7 @@ impl Solver {
             Some(limit) => limit,
             _ => n,
         };
-        let candidates = get_alpha_candidates_v2(&penalizer.distance_matrix, max_neighbors);
+        let candidates = get_alpha_candidates_v2(&penalizer.distance_matrix, max_neighbors, true);
         let cache = SolverCache::new(n);
         let rng = StdRng::seed_from_u64(42);
         Solver {
@@ -244,7 +244,7 @@ impl Solver {
                 self.solution_manager.best_solution = self
                     .penalizer
                     .penalize(&self.solution_manager.current_solution.route);
-                self.candidates = get_alpha_candidates_v2(&self.penalizer.distance_matrix, 5);
+                self.candidates = get_alpha_candidates_v2(&self.penalizer.distance_matrix, 5, true);
                 self.stats.held_karp_result = Some(held_carp_result);
             } else {
                 // diversification

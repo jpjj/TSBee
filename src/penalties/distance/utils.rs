@@ -26,6 +26,13 @@ pub(super) fn euclid_distance(a: (i64, i64), b: (i64, i64)) -> i64 {
     (1_000_000 * ((a.0 - b.0) * (a.0 - b.0) + (a.1 - b.1) * (a.1 - b.1))).isqrt()
 }
 
+pub(super) fn att_distance(a: (i64, i64), b: (i64, i64)) -> i64 {
+    let xd = a.0 - b.0;
+    let yd = a.1 - b.1;
+    let r = ((xd * xd + yd * yd) as f64 / 10.0).sqrt();
+    (1_000_000.0 * r.ceil()) as i64
+}
+
 #[cfg(test)]
 mod tests {
     use crate::penalties::distance::utils::is_symmetric;
