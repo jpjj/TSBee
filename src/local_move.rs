@@ -2,10 +2,7 @@ use std::ops::SubAssign;
 
 use crate::{
     domain::city::City,
-    penalties::{
-        candidates::Candidates,
-        distance::{DistanceMatrix, DistancePenalizer},
-    },
+    penalties::{candidates::Candidates, distance::DistanceMatrix},
     solution::Solution,
 };
 
@@ -14,7 +11,7 @@ use crate::{
 /// Returns relative position given of pos_a giben pos_b would be 0
 #[inline(always)]
 fn get_rel_pos(pos_a: usize, pos_b: usize, n: usize) -> usize {
-    return (n + pos_a - pos_b) % n;
+    (n + pos_a - pos_b) % n
 }
 
 struct Illegal2OptMove {
@@ -64,18 +61,9 @@ impl<'a> LocalSearch<'a> {
         }
     }
 
-    fn assert_correct_change(&self, current_solution: &Solution) {
-        let distance_penalizer = DistancePenalizer::new(self.distance_matrix.clone());
-        assert_eq!(
-            *current_solution,
-            distance_penalizer.penalize(&current_solution.route.clone())
-        );
-    }
-
     pub(crate) fn execute_3opt(&mut self, dlb: bool) -> Solution {
         // preparation
         let mut current_solution = self.current_solution.clone();
-        // self.assert_correct_change(&current_solution);
         let sequence = current_solution.route.sequence.clone();
         let n = current_solution.route.len();
         let mut succ: Vec<City> = sequence.clone();
@@ -208,8 +196,6 @@ impl<'a> LocalSearch<'a> {
                             }
                         }
                     } else {
-                        // c4 = pred[c3_pos]
-                        let c4_pos = (n + c3_pos - 1) % n;
                         let dist3 = self.distance_matrix.distance(*c3, c4);
                         for c5 in self.candidates.get_neighbors_out(&c4) {
                             let dist4 = self.distance_matrix.distance(c4, *c5);
@@ -296,14 +282,14 @@ impl<'a> LocalSearch<'a> {
 
     /// Tries to find an improving double bridge move by doing the following
     /// 1. Calculate ALL illegal 2opt moves that create two cycles.
-    /// Like in the 3opt, only consider the candidate edge for first edge addition.
+    ///     Like in the 3opt, only consider the candidate edge for first edge addition.
     /// 2. Sort these 2opt moves according by gain
-    /// first for-loop: loop over the 2opt moves
-    /// if gain is >= 0, break, no improvement to be found
-    /// second for-loop: loop over the rest of the moves.
-    /// if combined gain >= 0: break,
-    /// if combined gain is <0, check if the two moves done together create a tour
-    /// This is about whether a < b < c < d
+    ///     first for-loop: loop over the 2opt moves
+    ///     if gain is >= 0, break, no improvement to be found
+    ///     second for-loop: loop over the rest of the moves.
+    ///     if combined gain >= 0: break,
+    ///     if combined gain is <0, check if the two moves done together create a tour
+    ///     This is about whether a < b < c < d
     pub(crate) fn execute_double_bridge(&mut self) -> Solution {
         let mut current_solution = self.current_solution.clone();
         // self.assert_correct_change(&current_solution);

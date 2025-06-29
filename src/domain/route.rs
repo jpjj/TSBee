@@ -25,7 +25,7 @@ impl Index<usize> for Route {
 
 impl FromIterator<usize> for Route {
     fn from_iter<I: IntoIterator<Item = usize>>(iter: I) -> Self {
-        Route::new(iter.into_iter().map(|i| City(i)).collect())
+        Route::new(iter.into_iter().map(City).collect())
     }
 }
 

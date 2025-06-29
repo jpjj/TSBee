@@ -18,6 +18,6 @@ impl MinOneTree {
             degrees[a.id()] += 1;
             degrees[b.id()] += 1;
         }
-        return degrees;
+        degrees
     }
 }

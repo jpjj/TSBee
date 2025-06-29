@@ -2,11 +2,13 @@ use pyo3::{exceptions::PyValueError, PyResult};
 
 use crate::{input::Input, penalties::distance::DistanceMatrix};
 
+#[allow(dead_code)]
 pub(super) struct RawInput {
     distance_matrix: Vec<Vec<i64>>,
     time_limit: Option<f64>,
 }
 
+#[allow(dead_code)]
 impl RawInput {
     pub(super) fn new(distance_matrix: Vec<Vec<i64>>, time_limit: Option<f64>) -> Self {
         Self {
@@ -38,11 +40,11 @@ fn validate_distance_matrix(distance_matrix: &[Vec<i64>]) -> PyResult<()> {
     Ok(())
 }
 
-impl Into<Input> for RawInput {
-    fn into(self) -> Input {
+impl From<RawInput> for Input {
+    fn from(val: RawInput) -> Self {
         Input::new(
-            DistanceMatrix::new(self.distance_matrix),
-            self.time_limit.map(|t| chrono::Duration::seconds(t as i64)),
+            DistanceMatrix::new(val.distance_matrix),
+            val.time_limit.map(|t| chrono::Duration::seconds(t as i64)),
         )
     }
 }

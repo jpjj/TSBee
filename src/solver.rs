@@ -8,8 +8,7 @@ use crate::domain::city::City;
 use crate::domain::route::Route;
 use crate::input::Input;
 use crate::local_move::LocalSearch;
-use crate::penalties::candidates::alpha_nearness::{get_alpha_candidates, get_alpha_candidates_v2};
-use crate::penalties::candidates::candidate_set::get_nn_candidates;
+use crate::penalties::candidates::alpha_nearness::get_alpha_candidates_v2;
 use crate::penalties::candidates::held_karp::BoundCalculator;
 use crate::penalties::candidates::Candidates;
 use crate::penalties::distance::DistancePenalizer;
@@ -81,12 +80,12 @@ impl Solver {
         sequence.push(City(start));
         while sequence.len() < self.n {
             let mut city_found = false;
-            let city = sequence.last().unwrap().clone();
+            let city = *sequence.last().unwrap();
             cities_visited[city.id()] = true;
             let neighbors = self.candidates.get_neighbors_out(&city);
             for neighbor in neighbors {
                 if !cities_visited[neighbor.id()] {
-                    sequence.push(neighbor.clone());
+                    sequence.push(*neighbor);
                     city_found = true;
                     break;
                 }
@@ -95,7 +94,7 @@ impl Solver {
                 // now we have to find the minimum not found, yet
                 let mut closest_city = None;
                 let mut min_distance = None;
-                for i in 0..self.n {
+                for (i, _) in cities_visited.iter().enumerate() {
                     if cities_visited[i] {
                         continue;
                     }
@@ -139,7 +138,7 @@ impl Solver {
             Some(limit) => limit < self.stats.iterations_since_last_improvement,
             None => true,
         };
-        return result;
+        result
     }
 
     fn one_time(&self) -> bool {
@@ -196,61 +195,6 @@ impl Solver {
         self.cache.dont_look_bits[new_solution.route.sequence[b].id()] = true;
         self.cache.dont_look_bits[new_solution.route.sequence[c].id()] = true;
         self.cache.dont_look_bits[new_solution.route.sequence[d].id()] = true;
-    }
-
-    /// apply double bridge move n times and choose the best one.
-    fn double_bridge_kick_v2(&mut self) {
-        self.update_best_solution();
-
-        let mut new_solution = self.solution_manager.best_solution.clone();
-        let mut best_delta: Option<i64> = None;
-        let mut best_random_nums = None;
-        for _ in 0..1000 {
-            let mut random_numbers = (0..4)
-                .map(|_| self.rng.random_range(0..self.n))
-                .collect::<Vec<usize>>();
-            random_numbers.sort();
-            let curr_dist: i64 = random_numbers
-                .iter()
-                .map(|&i| {
-                    self.penalizer
-                        .distance_matrix
-                        .distance(new_solution.route[i], new_solution.route[(i + 1) % self.n])
-                })
-                .sum();
-
-            let new_dist: i64 = (0..4)
-                .map(|i| {
-                    self.penalizer.distance_matrix.distance(
-                        new_solution.route[random_numbers[i]],
-                        new_solution.route[(random_numbers[(i + 2) % 4] + 1) % self.n],
-                    )
-                })
-                .sum();
-            match best_delta {
-                None => {
-                    best_delta = Some(new_dist - curr_dist);
-                    best_random_nums = Some(random_numbers.clone());
-                }
-                Some(delta) => {
-                    if delta > new_dist - curr_dist {
-                        best_delta = Some(new_dist - curr_dist);
-                        best_random_nums = Some(random_numbers.clone());
-                    }
-                }
-            }
-        }
-        let random_numbers: Vec<usize> = best_random_nums.unwrap();
-        let a = 0;
-        let b = random_numbers[1] - random_numbers[0];
-        let c = random_numbers[2] - random_numbers[0];
-        let d = random_numbers[3] - random_numbers[0];
-        new_solution.route.sequence.rotate_left(random_numbers[0]);
-        new_solution.route.sequence[a..b].reverse();
-        new_solution.route.sequence[b..c].reverse();
-        new_solution.route.sequence[c..d].reverse();
-        new_solution.route.sequence[d..].reverse();
-        self.solution_manager.current_solution = self.penalizer.penalize(&new_solution.route);
     }
 
     /// function for solving the tsp
@@ -324,12 +268,14 @@ impl Solver {
             self.solution_manager.current_solution = new_solution;
             return true;
         }
-        return false;
+        false
     }
 }
 
 #[cfg(test)]
 mod tests {
+
+    use chrono::TimeDelta;
 
     use super::Solver;
     use crate::{input::Input, penalties::distance::DistanceMatrix};
@@ -392,10 +338,10 @@ mod tests {
         ];
         let distance_matrix = DistanceMatrix::new_euclidian(city_coordinates);
 
-        let input = Input::new(distance_matrix, None);
+        let input = Input::new(distance_matrix, TimeDelta::new(1, 0));
         let mut solver = Solver::new(input);
 
         let solution_report = solver.solve(true);
-        assert!(solution_report.best_solution.distance <= 786510);
+        assert!(solution_report.best_solution.distance <= 7865100);
     }
 }

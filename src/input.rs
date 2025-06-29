@@ -1,6 +1,5 @@
 // this will be what we get from the outside world and what will be inserted into the solver
 use crate::penalties::distance::DistanceMatrix;
-use chrono;
 
 pub struct Input {
     pub distance_matrix: DistanceMatrix,

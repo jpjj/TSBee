@@ -39,8 +39,8 @@ impl BoundCalculator {
         Self {
             distance_matrix,
             upper_bound,
-            max_iterations: max_iterations,
-            max_time: max_time,
+            max_iterations,
+            max_time,
         }
     }
 
@@ -57,7 +57,7 @@ impl BoundCalculator {
 
         // if L(k) fails to improve for some iterations, halve beta.
         let n = self.distance_matrix.len();
-        let mut lower_bound_best = i64::min_value();
+        let mut lower_bound_best = i64::MIN;
         let mut iterations = 0;
         let mut iterations_since_last_improvement_or_beta_change = 0;
         let mut beta = 2.0;
