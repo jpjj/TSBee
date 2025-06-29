@@ -1,13 +1,10 @@
-import random
-import math
+import datetime
 import time
+
+import fast_tsp
 import matplotlib.pyplot as plt
 import numpy as np
 import tsp_solve
-import fast_tsp
-import csv
-import datetime
-import os
 
 from python.playground import (
     calculate_distance_matrix,
@@ -38,7 +35,6 @@ def main():
         "diff_percentages": [],  # Store difference percentages
     }
     for i, size in enumerate(sizes):
-
         # Generate points with consistent seed per size
         points = generate_points(size, seed=seed + i)
         results["points_data"].append(points)
@@ -78,9 +74,7 @@ def main():
         print(
             f"  tsp_solve - Distance: {tsp_solve_solution.distance}, Iterations: {tsp_solve_solution.iterations}, Time: {tsp_solve_time:.2f} seconds"
         )
-        print(
-            f"  fast_tsp - Distance: {fast_tsp_distance}, Time: {fast_tsp_time:.2f} seconds"
-        )
+        print(f"  fast_tsp - Distance: {fast_tsp_distance}, Time: {fast_tsp_time:.2f} seconds")
         print(f"  Difference: {diff_percentage * 100:.2f}%")
 
     # Find the instance with the largest difference

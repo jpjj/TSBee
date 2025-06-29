@@ -1,9 +1,10 @@
-import numpy as np
-import scipy.stats as stats
+from typing import Tuple
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import scipy.stats as stats
 import seaborn as sns
-from typing import List, Tuple, Optional
 
 
 def load_samples(file_a: str, file_b: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -79,9 +80,7 @@ def perform_t_test(sample_a: np.ndarray, sample_b: np.ndarray) -> Tuple[float, f
     return t_stat, p_value
 
 
-def perform_mann_whitney(
-    sample_a: np.ndarray, sample_b: np.ndarray
-) -> Tuple[float, float]:
+def perform_mann_whitney(sample_a: np.ndarray, sample_b: np.ndarray) -> Tuple[float, float]:
     """
     Perform a Mann-Whitney U test (non-parametric)
     Returns the U-statistic and p-value
@@ -166,18 +165,14 @@ def ab_test_report(
     print("\n2. Two-Sample T-Test (Welch's t-test):")
     print(f"t-statistic: {t_stat:.4f}")
     print(f"p-value: {p_value_t:.8f}")
-    print(
-        f"Statistically significant at α = {alpha}: {'Yes' if p_value_t < alpha else 'No'}"
-    )
+    print(f"Statistically significant at α = {alpha}: {'Yes' if p_value_t < alpha else 'No'}")
 
     # Mann-Whitney U test
     u_stat, p_value_mw = perform_mann_whitney(sample_a, sample_b)
     print("\n3. Mann-Whitney U Test (Non-parametric):")
     print(f"U-statistic: {u_stat:.4f}")
     print(f"p-value: {p_value_mw:.8f}")
-    print(
-        f"Statistically significant at α = {alpha}: {'Yes' if p_value_mw < alpha else 'No'}"
-    )
+    print(f"Statistically significant at α = {alpha}: {'Yes' if p_value_mw < alpha else 'No'}")
 
     # Effect size
     cohen_d = calculate_effect_size(sample_a, sample_b)
@@ -222,9 +217,7 @@ def ab_test_report(
         print(
             "Note: While the difference is statistically significant, the effect size is negligible,"
         )
-        print(
-            "      suggesting the practical impact of this difference may be minimal."
-        )
+        print("      suggesting the practical impact of this difference may be minimal.")
 
     print("\n7. Recommendation:")
     if mean_diff > 0 and p_value_t < alpha and abs(cohen_d) >= 0.2:

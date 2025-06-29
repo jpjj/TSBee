@@ -67,6 +67,10 @@ impl DistanceMatrix {
         self.pi = Some(pi)
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.n == 0
+    }
+
     pub fn len(&self) -> usize {
         self.n
     }

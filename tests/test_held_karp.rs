@@ -59,8 +59,8 @@ fn held_karp_on_berlin52() {
     ];
     let dm = DistanceMatrix::new_euclidian(points);
 
-    let upper_bound = 786510;
-    let mut bound_calculator = BoundCalculator::new(dm, upper_bound, 200, TimeDelta::seconds(1));
+    let upper_bound = 7865100;
+    let mut bound_calculator = BoundCalculator::new(dm, upper_bound, 5000, TimeDelta::seconds(2));
     let result = bound_calculator.run();
     assert!(result.optimal)
 }

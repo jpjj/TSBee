@@ -30,18 +30,22 @@ pub(super) fn euclid_distance(a: (i64, i64), b: (i64, i64)) -> i64 {
 mod tests {
     use crate::penalties::distance::utils::is_symmetric;
 
-    fn symmetric() {
+    #[test]
+    fn test_symmetric() {
         let matrix = vec![0, 1, 2, 1, 0, 3, 2, 3, 0];
         let n = 3;
         assert!(is_symmetric(&matrix, n))
     }
 
-    fn not_symmetric() {
+    #[test]
+    fn test_not_symmetric() {
         let matrix = vec![0, 1, 2, 1, 0, 3, 2, 5, 0];
         let n = 3;
         assert!(!is_symmetric(&matrix, n))
     }
-    fn not_quadratic() {
+
+    #[test]
+    fn test_not_quadratic() {
         let matrix = vec![0, 1, 2, 1, 0, 3, 2, 5];
         let n = 3;
         assert!(!is_symmetric(&matrix, n))

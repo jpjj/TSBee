@@ -1,22 +1,20 @@
-import random
+import csv
+import datetime
 import math
+import os
+import random
 import time
+
+import fast_tsp
 import matplotlib.pyplot as plt
 import numpy as np
 import tsp_solve
-import fast_tsp
-import csv
-import datetime
-import os
 
 
 def generate_points(size, seed=42):
     """Generate random 2D points."""
     random.seed(seed)
-    points = [
-        (random.uniform(0, 1_000_000), random.uniform(0, 1_000_000))
-        for _ in range(size)
-    ]
+    points = [(random.uniform(0, 1_000_000), random.uniform(0, 1_000_000)) for _ in range(size)]
     return points
 
 
@@ -29,8 +27,7 @@ def calculate_distance_matrix(points):
             if i != j:
                 distance_matrix[i][j] = int(
                     math.sqrt(
-                        (points[i][0] - points[j][0]) ** 2
-                        + (points[i][1] - points[j][1]) ** 2
+                        (points[i][0] - points[j][0]) ** 2 + (points[i][1] - points[j][1]) ** 2
                     )
                 )
     return distance_matrix
@@ -94,9 +91,7 @@ def run_experiment(sizes, seed=42):
         print(
             f"  tsp_solve - Distance: {tsp_solve_solution.distance}, Iterations: {tsp_solve_solution.iterations}, Time: {tsp_solve_time:.2f} seconds"
         )
-        print(
-            f"  fast_tsp - Distance: {fast_tsp_distance}, Time: {fast_tsp_time:.2f} seconds"
-        )
+        print(f"  fast_tsp - Distance: {fast_tsp_distance}, Time: {fast_tsp_time:.2f} seconds")
         print(f"  Difference: {diff_percentage * 100:.2f}%")
 
     return results
@@ -117,9 +112,7 @@ def plot_results(results):
     fig, axs = plt.subplots(2, 2, figsize=(15, 12))
 
     # Plot 1: Running time vs Problem size
-    axs[0, 0].plot(
-        results["sizes"], results["tsp_solve_times"], "ro-", label="tsp_solve"
-    )
+    axs[0, 0].plot(results["sizes"], results["tsp_solve_times"], "ro-", label="tsp_solve")
     axs[0, 0].plot(results["sizes"], results["fast_tsp_times"], "bo-", label="fast_tsp")
     axs[0, 0].set_xlabel("Number of Cities")
     axs[0, 0].set_ylabel("Solution Time (seconds)")
@@ -287,9 +280,7 @@ def main():
     save_results_to_csv(results)
 
     # Only fit complexity for tsp_solve which has iterations
-    exponent, fitted_curve = fit_complexity(
-        results["sizes"], results["tsp_solve_iterations"]
-    )
+    exponent, fitted_curve = fit_complexity(results["sizes"], results["tsp_solve_iterations"])
     print(f"Estimated complexity for tsp_solve: O(n^{exponent:.2f})")
 
     # Plot results
@@ -300,12 +291,8 @@ def main():
     print(
         "--------------------------------------------------------------------------------------------------"
     )
-    print(
-        "| Size | tsp_solve |            |           | fast_tsp |           | Difference |"
-    )
-    print(
-        "|      | Distance  | Iterations | Time (s)  | Distance | Time (s)  | (%)        |"
-    )
+    print("| Size | tsp_solve |            |           | fast_tsp |           | Difference |")
+    print("|      | Distance  | Iterations | Time (s)  | Distance | Time (s)  | (%)        |")
     print(
         "--------------------------------------------------------------------------------------------------"
     )
