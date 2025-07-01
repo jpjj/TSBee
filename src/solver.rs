@@ -8,7 +8,7 @@ use crate::domain::city::City;
 use crate::domain::route::Route;
 use crate::input::Input;
 use crate::local_move::LocalSearch;
-use crate::penalties::candidates::alpha_nearness::get_alpha_candidates_v2;
+use crate::penalties::candidates::alpha_nearness::{get_alpha_candidates, get_alpha_candidates_v2};
 use crate::penalties::candidates::held_karp::BoundCalculator;
 use crate::penalties::candidates::Candidates;
 use crate::penalties::distance::DistancePenalizer;
@@ -244,7 +244,7 @@ impl Solver {
                 self.solution_manager.best_solution = self
                     .penalizer
                     .penalize(&self.solution_manager.current_solution.route);
-                self.candidates = get_alpha_candidates_v2(&self.penalizer.distance_matrix, 5, true);
+                self.candidates = get_alpha_candidates(&self.penalizer.distance_matrix, 5);
                 self.stats.held_karp_result = Some(held_carp_result);
             } else {
                 // diversification

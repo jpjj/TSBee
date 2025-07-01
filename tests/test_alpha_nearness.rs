@@ -5,8 +5,9 @@ use std::io::{BufRead, BufReader};
 use chrono::TimeDelta;
 use tsp_solve::domain::city::City;
 use tsp_solve::domain::route::Route;
-use tsp_solve::penalties::candidates::alpha_nearness::get_alpha_candidates_v2;
+use tsp_solve::penalties::candidates::alpha_nearness::get_alpha_candidates;
 use tsp_solve::penalties::candidates::held_karp::BoundCalculator;
+use tsp_solve::penalties::candidates::Candidates;
 use tsp_solve::penalties::distance::{DistanceMatrix, DistancePenalizer};
 
 fn read_att532() -> Vec<(i64, i64)> {
@@ -157,12 +158,9 @@ fn test_correct_opt_sol_att532() {
     assert_eq!(solution.distance, 27686 * 1_000_000);
 }
 
-#[test]
-fn test_correct_alpha_nearness_neighbors_att532() {
-    let points = read_att532();
-    let dm = DistanceMatrix::new_att(read_att532());
+fn get_optimal_neighors_att532() -> Vec<HashSet<usize>> {
     let optimal_route: Vec<usize> = read_att532_tour();
-    let n = points.len();
+    let n = optimal_route.len();
     let optimal_neighbors: Vec<HashSet<usize>> = optimal_route
         .iter()
         .enumerate()
@@ -175,7 +173,12 @@ fn test_correct_alpha_nearness_neighbors_att532() {
             .collect()
         })
         .collect();
-    let alpha_cans = get_alpha_candidates_v2(&dm, 100, false);
+    optimal_neighbors
+}
+
+fn print_rank_counter(alpha_cans: Candidates) {
+    let optimal_route: Vec<usize> = read_att532_tour();
+    let optimal_neighbors = get_optimal_neighors_att532();
     let mut rank_counter: Vec<f64> = vec![0.0; 100];
     for (i, city) in optimal_route.iter().enumerate() {
         let cans = alpha_cans.get_neighbors_out(&City(*city));
@@ -187,47 +190,33 @@ fn test_correct_alpha_nearness_neighbors_att532() {
     }
     let sumi = rank_counter.iter().sum::<f64>();
     rank_counter = rank_counter.iter().map(|x| x * 100.0 / sumi).collect();
-    for (i, _) in rank_counter.iter().enumerate().take(20) {
-        eprintln!("{i}: {:.1}", rank_counter[i]);
+    for (i, _) in rank_counter.iter().enumerate().take(23) {
+        eprintln!("{}: {:.1}", i + 1, rank_counter[i]);
     }
+    let average_rank: f64 = rank_counter
+        .iter()
+        .enumerate()
+        .map(|(i, prob)| (i + 1) as f64 * prob)
+        .sum::<f64>()
+        / 100.0;
+    eprint!("Average Rank: {:.1}", average_rank);
+}
+
+#[test]
+fn test_correct_alpha_nearness_neighbors_att532() {
+    let dm = DistanceMatrix::new_att(read_att532());
+    let alpha_cans = get_alpha_candidates(&dm, 532);
+    print_rank_counter(alpha_cans);
 }
 
 #[test]
 fn test_correct_alpha_nearness_neighbors_improved_att532() {
-    let points = read_att532();
     let mut dm = DistanceMatrix::new_att(read_att532());
-    let optimal_route: Vec<usize> = read_att532_tour();
-    let n = points.len();
-    let optimal_neighbors: Vec<HashSet<usize>> = optimal_route
-        .iter()
-        .enumerate()
-        .map(|(i, _)| {
-            vec![
-                optimal_route[(n + i - 1) % n],
-                optimal_route[(n + i + 1) % n],
-            ]
-            .into_iter()
-            .collect()
-        })
-        .collect();
     let upper_bound = 27686 * 1_000_000;
     let mut bound_calculator =
-        BoundCalculator::new(dm.clone(), upper_bound, 500000, TimeDelta::seconds(20));
+        BoundCalculator::new(dm.clone(), upper_bound, 5000, TimeDelta::seconds(3));
     let result = bound_calculator.run();
     dm.update_pi(result.pi.clone());
-    let alpha_cans = get_alpha_candidates_v2(&dm, 100, false);
-    let mut rank_counter: Vec<f64> = vec![0.0; 100];
-    for (i, city) in optimal_route.iter().enumerate() {
-        let cans = alpha_cans.get_neighbors_out(&City(*city));
-        for j in 0..100 {
-            if optimal_neighbors[i].contains(&cans[j].id()) {
-                rank_counter[j] += 1.0;
-            }
-        }
-    }
-    let sumi = rank_counter.iter().sum::<f64>();
-    rank_counter = rank_counter.iter().map(|x| x * 100.0 / sumi).collect();
-    for (i, _) in rank_counter.iter().enumerate().take(20) {
-        eprintln!("{i}: {:.1}", rank_counter[i]);
-    }
+    let alpha_cans = get_alpha_candidates(&dm, 532);
+    print_rank_counter(alpha_cans);
 }
