@@ -3,7 +3,7 @@ use pyo3::{exceptions::PyValueError, PyResult};
 use crate::{input::Input, penalties::distance::DistanceMatrix};
 
 #[allow(dead_code)]
-pub(super) struct RawInput {
+pub struct RawInput {
     distance_matrix: Vec<Vec<i64>>,
     time_limit: Option<f64>,
 }
@@ -37,6 +37,15 @@ fn validate_distance_matrix(distance_matrix: &[Vec<i64>]) -> PyResult<()> {
         }
     }
 
+    // Check if the matrix has zero entries on diagonal
+    for (i, row) in distance_matrix.iter().enumerate() {
+        if 0 != row[i] {
+            return Err(PyValueError::new_err(
+                "Distance matrix must have zeros on diagonal",
+            ));
+        }
+    }
+
     Ok(())
 }
 
@@ -44,7 +53,8 @@ impl From<RawInput> for Input {
     fn from(val: RawInput) -> Self {
         Input::new(
             DistanceMatrix::new(val.distance_matrix),
-            val.time_limit.map(|t| chrono::Duration::seconds(t as i64)),
+            val.time_limit
+                .map(|t| chrono::Duration::microseconds((t * 1_000_000.0) as i64)),
         )
     }
 }

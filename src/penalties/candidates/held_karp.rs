@@ -89,14 +89,14 @@ impl BoundCalculator {
             }
             let degrees = min_1_tree.get_degrees();
             // 3
-            let g: Vec<i32> = degrees.into_iter().map(|x| x as i32 - 2).collect();
+            let g: Vec<i64> = degrees.into_iter().map(|x| x as i64 - 2).collect();
             if g.iter().min() == Some(&0) {
                 // all degrees are two, so we found a min 1-tree that is a hamiltonian cycle, optimal solution found.
                 return HeldKarpResult::new(pi, min_1_tree, true);
             }
             // 4
             let t = beta * (self.upper_bound - lower_bound) as f64
-                / g.iter().map(|x| x * x).sum::<i32>() as f64;
+                / g.iter().map(|x| x * x).sum::<i64>() as f64;
 
             // 5
             let pi_new = pi

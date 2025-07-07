@@ -2,6 +2,22 @@ use std::{cmp::Ordering, ops::SubAssign};
 
 use crate::domain::route::Route;
 
+/// Represents a solution to the Traveling Salesman Problem.
+///
+/// A solution consists of a route (the order in which cities are visited) and
+/// the total distance of that route. Solutions can be compared based on their
+/// distance, with shorter distances being better.
+///
+/// # Fields
+///
+/// * `route` - The sequence of cities forming the tour
+/// * `distance` - The total distance of the tour (including return to start)
+///
+/// # Ordering
+///
+/// Solutions are ordered by distance, allowing easy identification of better solutions.
+/// Two solutions with the same distance are considered equal, regardless of the
+/// actual route taken.
 #[derive(Clone, Debug)]
 pub struct Solution {
     pub route: Route,
@@ -9,8 +25,27 @@ pub struct Solution {
 }
 
 impl Solution {
-    /// apply two-opt move. In order to not recalculate the distance, it most be ensured that the delta distance
-    /// is the actual difference between the old and the new sequence.
+    /// Applies a 2-opt move to improve the solution.
+    ///
+    /// A 2-opt move removes two edges from the tour and reconnects the path by
+    /// reversing one of the segments. This is done in-place for efficiency.
+    ///
+    /// # Arguments
+    ///
+    /// * `idx1` - Position of the first city in the edge to remove
+    /// * `idx2` - Position of the second city in the edge to remove
+    /// * `delta_distance` - The improvement in distance (positive value means improvement)
+    ///
+    /// # Algorithm
+    ///
+    /// 1. Rotate the tour so that idx1 is at position 0
+    /// 2. Reverse the segment from idx2 to the end
+    /// 3. Update the total distance
+    ///
+    /// # Example
+    ///
+    /// Tour: A-B-C-D-E-F-A, remove edges (B,C) and (E,F)
+    /// Result: A-B-F-E-D-C-A (segment C-D-E is reversed)
     pub(super) fn apply_two_opt(&mut self, idx1: usize, idx2: usize, delta_distance: i64) {
         let n = self.route.len();
         self.route.sequence.rotate_left(idx1);

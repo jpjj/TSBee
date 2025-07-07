@@ -17,6 +17,14 @@ impl Parameters {
         max_no_improvement: Option<u64>,
         max_neighbors: Option<usize>,
     ) -> Self {
+        if max_time.is_none() & max_iterations.is_none() & max_no_improvement.is_none() {
+            return Self {
+                max_iterations,
+                max_time,
+                max_no_improvement: Some(5),
+                max_neighbors,
+            };
+        }
         Self {
             max_iterations,
             max_time,
