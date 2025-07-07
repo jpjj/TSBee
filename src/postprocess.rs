@@ -20,7 +20,7 @@ use crate::solver::solution_report::SolutionReport;
 ///         the first city after visiting the last one.
 ///
 /// Example:
-///     >>> solution = tsp_solve.solve(distance_matrix)
+///     >>> solution = tsbee.solve(distance_matrix)
 ///     >>> print(f"Best distance: {solution.distance}")
 ///     >>> print(f"Found in {solution.iterations} iterations")
 ///     >>> print(f"Time taken: {solution.time:.2f} seconds")

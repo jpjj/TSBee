@@ -11,20 +11,18 @@ TSBee is a high-performance Traveling Salesman Problem (TSP) solver implemented 
 Features
 --------
 
-* **Fast Rust Implementation**: Core algorithms implemented in Rust for optimal performance
-* **Python API**: Easy-to-use Python interface for integration with data science workflows
-* **Symmetric & Asymmetric TSP**: Supports both TSP and ATSP problem types
+* **Fast Rust Implementation**: Advanced 3-opt local search algorithms implemented in Rust for optimal performance
+* **Python API**: Simple, clean Python interface for integration with data science workflows
 * **Configurable Time Limits**: Control solver runtime with customizable time constraints
-* **Comprehensive Examples**: Includes examples and benchmarks for various problem sizes
 
 Quick Start
 -----------
 
 .. code-block:: python
 
-    import tsp_solve
+    import tsbee
 
-    # Define your distance matrix
+    # Define your distance matrix (floating-point supported)
     distance_matrix = [
         [0, 10, 15, 20],
         [10, 0, 35, 25],
@@ -33,10 +31,9 @@ Quick Start
     ]
 
     # Solve the TSP
-    solution = tsp_solve.solve(distance_matrix)
+    tour = tsbee.solve(distance_matrix)
 
-    print(f"Best tour: {solution.tour}")
-    print(f"Total distance: {solution.distance}")
+    print(f"Returned tour: {tour}")
 
 .. toctree::
    :maxdepth: 2
@@ -46,4 +43,3 @@ Quick Start
    quickstart
    api
    examples
-   benchmarks

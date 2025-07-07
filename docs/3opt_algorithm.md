@@ -94,7 +94,7 @@ Applies a 2-opt move to the current solution, reversing a segment of the tour.
 ## Usage Example
 
 ```rust
-use tsp_solve::Solver;
+use tsbee::Solver;
 
 // Create solver with distance matrix
 let mut solver = Solver::new(input);

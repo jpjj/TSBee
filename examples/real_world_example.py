@@ -1,14 +1,14 @@
 """
 Real-world example: Delivery route optimization.
 
-This example demonstrates how to use tsp_solve for a realistic delivery
+This example demonstrates how to use tsbee for a realistic delivery
 route optimization scenario with actual city coordinates.
 """
 
 from typing import List, Tuple
 
 import numpy as np
-import tsp_solve
+import tsbee
 
 # Major US cities with approximate coordinates (latitude, longitude)
 CITIES = {
@@ -113,7 +113,7 @@ def main():
 
     # Solve TSP
     print(f"Optimizing route for {len(east_coast_cities)} cities...")
-    solution = tsp_solve.solve(distances.tolist())
+    solution = tsbee.solve(distances.tolist())
 
     # Format results
     route = format_route(east_coast_cities, solution.tour)
@@ -145,7 +145,7 @@ def main():
     distances = create_distance_matrix(distribution_centers)
 
     print(f"Optimizing route for {len(distribution_centers)} distribution centers...")
-    solution = tsp_solve.solve(distances.tolist(), time_limit=5.0)
+    solution = tsbee.solve(distances.tolist(), time_limit=5.0)
 
     route = format_route(distribution_centers, solution.tour)
     total_km = calculate_total_distance(distribution_centers, solution.tour)

@@ -10,7 +10,7 @@ This example shows how to:
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tsp_solve
+import tsbee
 
 
 def calculate_distance_matrix(coords):
@@ -80,7 +80,7 @@ def main():
 
     # Solve TSP
     print("Solving TSP...")
-    solution = tsp_solve.solve(distance_matrix.tolist())
+    solution = tsbee.solve(distance_matrix.tolist())
 
     # Print results
     print("\nResults:")

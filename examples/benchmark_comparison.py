@@ -1,7 +1,7 @@
 """
 Benchmark comparison example.
 
-This example compares tsp_solve with other TSP solvers and demonstrates
+This example compares tsbee with other TSP solvers and demonstrates
 how to measure performance across different problem sizes.
 """
 
@@ -9,7 +9,7 @@ import time
 from typing import Dict, List, Tuple
 
 import numpy as np
-import tsp_solve
+import tsbee
 
 
 def generate_clustered_cities(n_cities: int, n_clusters: int = 4) -> np.ndarray:
@@ -39,7 +39,7 @@ def calculate_tour_distance(coords: np.ndarray, tour: List[int]) -> float:
 
 
 def benchmark_solver(coords: np.ndarray, time_limit: float = None) -> Dict:
-    """Benchmark tsp_solve on given coordinates."""
+    """Benchmark tsbee on given coordinates."""
     n = len(coords)
 
     # Calculate distance matrix
@@ -52,14 +52,14 @@ def benchmark_solver(coords: np.ndarray, time_limit: float = None) -> Dict:
 
     # Solve
     start_time = time.time()
-    solution = tsp_solve.solve(distance_matrix.tolist(), time_limit=time_limit)
+    solution = tsbee.solve(distance_matrix.tolist(), time_limit=time_limit)
     end_time = time.time()
 
     # Calculate actual distance
     actual_distance = calculate_tour_distance(coords, solution.tour)
 
     return {
-        "solver": "tsp_solve",
+        "solver": "tsbee",
         "n_cities": n,
         "distance": actual_distance,
         "time": end_time - start_time,
@@ -102,10 +102,10 @@ def main():
         # Generate cities
         coords = generate_clustered_cities(n_cities)
 
-        # Benchmark tsp_solve
+        # Benchmark tsbee
         result = benchmark_solver(coords)
 
-        print("tsp_solve:")
+        print("tsbee:")
         print(f"  Distance: {result['distance']:.2f}")
         print(f"  Time: {result['time']:.3f} seconds")
         print(f"  Iterations: {result['iterations']}")

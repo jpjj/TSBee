@@ -13,10 +13,10 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
-# Add parent directory to path to import tsp_solve
+# Add parent directory to path to import tsbee
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import tsp_solve
+import tsbee
 from tsplib_parser import TSPLIBParser, parse_tour_file
 
 
@@ -55,7 +55,7 @@ def run_single_benchmark(
 
     for _ in range(num_runs):
         start_time = time.time()
-        tour = tsp_solve.solve(distance_matrix, time_limit=time_limit)
+        tour = tsbee.solve(distance_matrix, time_limit=time_limit)
         end_time = time.time()
 
         # Calculate the actual tour distance

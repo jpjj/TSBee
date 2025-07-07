@@ -3,12 +3,12 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 use chrono::TimeDelta;
-use tsp_solve::domain::city::City;
-use tsp_solve::domain::route::Route;
-use tsp_solve::penalties::candidates::alpha_nearness::get_alpha_candidates;
-use tsp_solve::penalties::candidates::held_karp::BoundCalculator;
-use tsp_solve::penalties::candidates::Candidates;
-use tsp_solve::penalties::distance::{DistanceMatrix, DistancePenalizer};
+use tsbee::domain::city::City;
+use tsbee::domain::route::Route;
+use tsbee::penalties::candidates::alpha_nearness::get_alpha_candidates;
+use tsbee::penalties::candidates::held_karp::BoundCalculator;
+use tsbee::penalties::candidates::Candidates;
+use tsbee::penalties::distance::{DistanceMatrix, DistancePenalizer};
 
 fn read_att532() -> Vec<(i64, i64)> {
     let file_path = "./tests/data/ATT532/att532.tsp";

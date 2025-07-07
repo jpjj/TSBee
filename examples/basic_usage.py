@@ -1,11 +1,11 @@
 """
-Basic usage example for tsp_solve.
+Basic usage example for tsbee.
 
 This example demonstrates how to solve a simple TSP instance with a small
 number of cities using a pre-defined distance matrix.
 """
 
-import tsp_solve
+import tsbee
 
 
 def main():
@@ -24,7 +24,7 @@ def main():
     ]
 
     # Solve the TSP
-    solution = tsp_solve.solve(distance_matrix)
+    solution = tsbee.solve(distance_matrix)
 
     # Print results
     print(f"Total distance: {solution.distance}")
@@ -42,7 +42,7 @@ def main():
     print("Example 2: Same problem with 1-second time limit")
     print("-" * 40)
 
-    solution_timed = tsp_solve.solve(distance_matrix, time_limit=1.0)
+    solution_timed = tsbee.solve(distance_matrix, time_limit=1.0)
 
     print(f"Total distance: {solution_timed.distance}")
     print(f"Tour: {' -> '.join(map(str, solution_timed.tour))}")
