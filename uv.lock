@@ -271,53 +271,6 @@ wheels = [
 ]
 
 [[package]]
-name = "fast-tsp"
-version = "0.1.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy", version = "1.24.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
-    { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
-    { name = "numpy", version = "2.2.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/86/86/f32db7e50cde7b9e9e255fa50adfb336451a5c7b6ed8257d6ffacfae38ea/fast_tsp-0.1.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:05a15327e370c0bb87b143b4ef814753c6fb074361336f7faadf5b93c6a52d97", size = 121977 },
-    { url = "https://files.pythonhosted.org/packages/ec/80/42c5b058c2f5c7605a2ab8294356ac84032a39d1741803bb61f1c63fefce/fast_tsp-0.1.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:a098e5da27436eb6c5be3ca817dd8efa1efc6a7356562df1c8a1d6685156107b", size = 66262 },
-    { url = "https://files.pythonhosted.org/packages/45/8d/5b5deb5daf0926bb0799f05380caf59da64245be5ac5e64c97e2d2cf72a4/fast_tsp-0.1.4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:04411c6544c5553cc3560ef158dd45921db05adb23fdba401646afaf61ccd478", size = 61755 },
-    { url = "https://files.pythonhosted.org/packages/96/c6/a9a3c02d1b1030dcd634ae9d49cfe55d1c07e1b2f9686718673b9f0aa94d/fast_tsp-0.1.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7a5eb8ee53cb0fcc9a83fdb02e50702f18618503febd149e9a3db4d00c29afb9", size = 93077 },
-    { url = "https://files.pythonhosted.org/packages/ad/b6/1068170a00a7b097f083931664bb7a295e030318c7055cdda1731ab82e8d/fast_tsp-0.1.4-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:22d898029fe7d7226d44f0c3bbe03ad6cbdbc2aa78bb312300d2ba859295ef5d", size = 617579 },
-    { url = "https://files.pythonhosted.org/packages/d8/7c/e74ffc31e8a73369274a653dc9e9ad6a398e0863ffc60c9ac2457edbeee6/fast_tsp-0.1.4-cp310-cp310-win32.whl", hash = "sha256:ffd2fba5cc1e63f8f0be611795bc2ce3ffd9cfcc8e3de00b8342c6e78ae1e89c", size = 62263 },
-    { url = "https://files.pythonhosted.org/packages/02/f8/792dfce6e0979931a7b8a6e2962c32c3733ef3590eb54b7238a875bbadac/fast_tsp-0.1.4-cp310-cp310-win_amd64.whl", hash = "sha256:b975a73e60939a48534b7665062da814232ec2674b3c2c340a7ce506d2db74e7", size = 70291 },
-    { url = "https://files.pythonhosted.org/packages/be/57/5cb516392e5329ff8c39d23dfe62790d86ea42d651f5de5e3a5aea4ebd80/fast_tsp-0.1.4-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:8182c7a7cd1f0711cea9aa1c4fed60b58581952ce17a32be1ba6d9438b3cf97a", size = 124652 },
-    { url = "https://files.pythonhosted.org/packages/77/de/aa48b5c224097a2c8a9c050eb1b31f9963b441178ce7b7fcbf024ef6c927/fast_tsp-0.1.4-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:9f71e5b052269a1c4874bd02cb0e6682da94873b83b1a41e20b6cbd2bbd66de8", size = 67592 },
-    { url = "https://files.pythonhosted.org/packages/5d/23/9e5266c6d9e095f41b5213d0ebede0eab6ef4876acee1046fbf56d367af3/fast_tsp-0.1.4-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:3ffcbf8c8f9bc02b5ba7f928f50920c39d9578076611ad0f543f4935ea0f2ed8", size = 63252 },
-    { url = "https://files.pythonhosted.org/packages/22/23/1259e71dd988f903674dcfdf7747e6b9f9696fdc4ca44e9182658c05c261/fast_tsp-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:919ac5466279a059024c43fcbcd32ede2117710cc7f70ac2a10b1d3b5fe4d0c0", size = 94577 },
-    { url = "https://files.pythonhosted.org/packages/e0/da/e8cc160a197b2bd1cf6f90d5b5f22430f8f6e98bda3b34e14fc1bd4fcaf4/fast_tsp-0.1.4-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:7bf8bbbf947491cde9ccb66a3846b01932ecb551567a2c42fb28c7d23c777c1a", size = 617857 },
-    { url = "https://files.pythonhosted.org/packages/73/6e/12c980c001bb500cd371f2b9ee5680c1615023b97e9922e8d5bd553f0b3c/fast_tsp-0.1.4-cp311-cp311-win32.whl", hash = "sha256:c4a52c1b61e8e6cd898b0440fe3cc338296f04528a2f2320321fc76d2aa780e3", size = 63360 },
-    { url = "https://files.pythonhosted.org/packages/8a/d1/c0b8e0d0b1fdd5a8d1b9092cac8512d0dc63176f7f0572a9307034e7b855/fast_tsp-0.1.4-cp311-cp311-win_amd64.whl", hash = "sha256:a27d98af047af4093d7c4d74405e526b4c28a206c0017eb3fa9d80847fa6bf80", size = 71356 },
-    { url = "https://files.pythonhosted.org/packages/41/75/9e5e526d6139acaa0aba4be2ea9a17e4f6633817d653398a3255680c53ca/fast_tsp-0.1.4-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:abb3ad48642ed54ed6fbc785f58766c82b50b0f64ecd1b8de68df761bd5338d8", size = 121993 },
-    { url = "https://files.pythonhosted.org/packages/41/3b/df5f5157d7bf9f7af6c1c4640d64a69a5004f4a339368ed9add707e24fb2/fast_tsp-0.1.4-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:0d5641805643ae41f2370599abec600e963929d250766eea5e5b0ab097fe66f3", size = 66460 },
-    { url = "https://files.pythonhosted.org/packages/93/59/ea8ddfe896d0004ab534e763678c0c7d5cfbfaac2dffdf2f999067915ecc/fast_tsp-0.1.4-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:d1044fc157203366d9ec567283d82240624739a3690c85d6579d34f80a5f146a", size = 61587 },
-    { url = "https://files.pythonhosted.org/packages/02/27/19299f389564b9dbf025ffffda3c93524c15fb0dd47fa818d408aa08386f/fast_tsp-0.1.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bb0df9d4edd9908580a759ebde63651e0a04f1b45ddd47f9f3e241b703d1ab8f", size = 93727 },
-    { url = "https://files.pythonhosted.org/packages/3e/e3/0fe5930e8e658b9da62b0867eada14e4a77cca496d1178ef07691256c6be/fast_tsp-0.1.4-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:0c1f63658fcf0fff0822274408f53b42d9aed26629ae22c57c46c8b676ee8c61", size = 617567 },
-    { url = "https://files.pythonhosted.org/packages/45/23/7778f1551034f70494ae3b8edd5ebfefd7bf8ecc10174a619369dc5730d8/fast_tsp-0.1.4-cp312-cp312-win32.whl", hash = "sha256:3a27855c360aed29fab70085e42372e5244ebd984513f83145e50430ea2f0452", size = 62776 },
-    { url = "https://files.pythonhosted.org/packages/28/ff/f020ae26bb9501c35290f2147c951f775fa4696635516994161abb551bae/fast_tsp-0.1.4-cp312-cp312-win_amd64.whl", hash = "sha256:b1022783fe51c8277cb9f6f3944fe0b2dee4f77487043f9149aecd1a50f6ba75", size = 70426 },
-    { url = "https://files.pythonhosted.org/packages/19/b6/a3dd87fbb6009b9f68a9789b2dfd662743188d6501f74eee32a3e0ebff51/fast_tsp-0.1.4-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:0705a43ef1493cafb2b7e02ff89c03faec3bd3958676777aeddd7d5406012e7f", size = 122054 },
-    { url = "https://files.pythonhosted.org/packages/60/f9/59ccc43e57747a0e31edb301da3c615f5548d26cb80dc45aa7be861c6dfa/fast_tsp-0.1.4-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:59b43afef9be0b6bb0d29a74b669782717057f36c7256a24d7d04df576f75b19", size = 66281 },
-    { url = "https://files.pythonhosted.org/packages/73/d8/f0b67056495d3b8e809240acbc7dc991c3b782e2461806db386d1e19feef/fast_tsp-0.1.4-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:3d09083b4569c7f5bcc25cdb6201e96674f01be98d04833a5b7278a909e908d0", size = 61796 },
-    { url = "https://files.pythonhosted.org/packages/52/22/c00329a9f34f542489379a57670f3019edd73f79d84a9bd92ce3b7fb405d/fast_tsp-0.1.4-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ed3e7b217e795943a51e1cb02e60356f2744d1ddfdcf75c4ef136f41d69c6077", size = 92826 },
-    { url = "https://files.pythonhosted.org/packages/58/b5/fd5ab195f5a9500835f80fbccc8f94b0413175acd9fcdc6671eefe5a8ddc/fast_tsp-0.1.4-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:acae5bd9cf1669688b9b770ec03f1abedb0d572574f799d2fd940a2ea9e5f82a", size = 617532 },
-    { url = "https://files.pythonhosted.org/packages/66/64/cac572ea94b80309d63b3d8deb4ea36c19687610da9c87626256fa79d6b4/fast_tsp-0.1.4-cp38-cp38-win32.whl", hash = "sha256:d64e81400ab84a0612409b9abbaacd7e4ffd29cbe0583aa1b55435643afecef9", size = 62321 },
-    { url = "https://files.pythonhosted.org/packages/13/ef/3fd850f83126be0658c2f9aabadc4c794aabf975fc46f034d1ebf5e7a3e8/fast_tsp-0.1.4-cp38-cp38-win_amd64.whl", hash = "sha256:ec101c1e9054648525a85b869bdf0c93c98b5c99897f6108d04d442d3cfbf362", size = 70117 },
-    { url = "https://files.pythonhosted.org/packages/c7/5f/c58d15d1f9fe50a09aef72cdafa4949c41fa053f08c5ef6474f151dd6fc9/fast_tsp-0.1.4-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:bb7fc4c49d384bd95d8c66509119a746af346fbe19d3a1e7dd72c2a17fe38cb7", size = 122235 },
-    { url = "https://files.pythonhosted.org/packages/49/bf/76046ebd5c35f499a998fd865da5d613a073de90d22f3ba35851015eb279/fast_tsp-0.1.4-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:6a577f824891859fb4d9fa2a9c915f5efd85028614d8c481dbbd9f2719c2ac03", size = 66369 },
-    { url = "https://files.pythonhosted.org/packages/be/8d/07d56dce46794f3f192d7cc63d3b9b5d6981610013680a1b4a18a52a8ee5/fast_tsp-0.1.4-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:aae9fc6d63f20e6b3dd1255d2a511a9fe79501e468c68389552125210bfe5f60", size = 61903 },
-    { url = "https://files.pythonhosted.org/packages/24/30/63d1288d1c8189b79cee31ba999d9c8659133a11718b07cbb166037ca114/fast_tsp-0.1.4-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9c7379fc79a2a79d0b4fd95863b6a40499464dbdc2a4d50551abce3789433889", size = 93418 },
-    { url = "https://files.pythonhosted.org/packages/53/34/5c222ce0d8f4c995224e0fc407bfec63f9e838f9a080b24b57a15003e381/fast_tsp-0.1.4-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:3e72b8911ab7162a22d395265c6091e8b86af5b578343f7dee1b4e798031c0f2", size = 617717 },
-    { url = "https://files.pythonhosted.org/packages/eb/02/77b72d8a64d42a6782a92a629e494fc8967a1005831cf48f2c6ec50383b7/fast_tsp-0.1.4-cp39-cp39-win32.whl", hash = "sha256:e6ce368b55ad7aa0e379b01d3dffb5f19bb293efe9756fdfb1bd6c80403bd5fa", size = 62529 },
-    { url = "https://files.pythonhosted.org/packages/cb/10/3f6e5d7f212622a6f3d01334b7531b0caa09ccad9b50e29b8832a208d58b/fast_tsp-0.1.4-cp39-cp39-win_amd64.whl", hash = "sha256:9884ebe9b6be8998cd59e581b9341dc1ea0b8216303e439707631aeb8757ce4b", size = 70203 },
-]
-
-[[package]]
 name = "filelock"
 version = "3.16.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1813,7 +1766,6 @@ wheels = [
 name = "tsp-solve"
 source = { editable = "." }
 dependencies = [
-    { name = "fast-tsp" },
     { name = "matplotlib", version = "3.7.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "matplotlib", version = "3.9.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
     { name = "matplotlib", version = "3.10.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
@@ -1836,7 +1788,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fast-tsp", specifier = ">=0.1.4" },
     { name = "matplotlib", specifier = ">=3.7.5" },
     { name = "pandas", specifier = ">=2.0.3" },
     { name = "pre-commit", specifier = ">=3.5.0" },
