@@ -287,9 +287,9 @@ impl Solver {
                     max_time,
                 );
                 let held_carp_result = held_karp_calculator.run();
-                if held_carp_result.optimal {
-                    println!("optimal")
-                }
+                // if held_carp_result.optimal {
+                //     println!("optimal")
+                // }
                 self.penalizer
                     .distance_matrix
                     .update_pi(held_carp_result.pi.clone());

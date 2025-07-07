@@ -1,5 +1,5 @@
 use chrono::TimeDelta;
-use tsp_solve::penalties::{candidates::held_karp::BoundCalculator, distance::DistanceMatrix};
+use tsbee::penalties::{candidates::held_karp::BoundCalculator, distance::DistanceMatrix};
 
 #[test]
 fn held_karp_on_berlin52() {

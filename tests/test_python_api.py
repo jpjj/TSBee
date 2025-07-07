@@ -1,5 +1,5 @@
 """
-Tests for the tsp_solve Python API.
+Tests for the tsbee Python API.
 
 These tests verify that the Python bindings work correctly and that
 the solver produces valid solutions for various input types.
@@ -8,7 +8,7 @@ the solver produces valid solutions for various input types.
 from typing import List
 
 import pytest
-import tsp_solve
+import tsbee
 
 
 def calculate_tour_distance(distance_matrix: List[List[int]], tour: List[int]) -> int:
@@ -29,7 +29,7 @@ class TestBasicFunctionality:
 
     def test_import(self):
         """Test that the module can be imported."""
-        assert hasattr(tsp_solve, "solve")
+        assert hasattr(tsbee, "solve")
 
     def test_small_symmetric_matrix(self):
         """Test solving a small 4-city problem."""
@@ -40,7 +40,7 @@ class TestBasicFunctionality:
             [20, 25, 30, 0],
         ]
 
-        tour = tsp_solve.solve(distance_matrix)
+        tour = tsbee.solve(distance_matrix)
 
         # Check solution validity
         assert len(tour) == 4
@@ -51,7 +51,7 @@ class TestBasicFunctionality:
         n = 20
         distance_matrix = [[abs(i - j) * 10 for j in range(n)] for i in range(n)]
 
-        tour = tsp_solve.solve(distance_matrix, time_limit=0.1)
+        tour = tsbee.solve(distance_matrix, time_limit=0.1)
 
         assert len(tour) == n
         assert set(tour) == set(range(n))
@@ -69,24 +69,24 @@ class TestInputValidation:
         ]
 
         with pytest.raises(ValueError, match="square"):
-            tsp_solve.solve(distance_matrix)
+            tsbee.solve(distance_matrix)
 
     def test_non_zero_diagonal(self):
         """Test that non-zero diagonal values are rejected."""
         distance_matrix = [[5, 10, 15], [10, 0, 35], [15, 35, 0]]  # Non-zero diagonal
 
         with pytest.raises(ValueError, match="zeros on diagonal"):
-            tsp_solve.solve(distance_matrix)
+            tsbee.solve(distance_matrix)
 
     def test_empty_matrix(self):
         """Test that empty matrices are rejected."""
         with pytest.raises(ValueError):
-            tsp_solve.solve([])
+            tsbee.solve([])
 
     def test_single_city(self):
         """Test single city case."""
         distance_matrix = [[0]]
-        tour = tsp_solve.solve(distance_matrix)
+        tour = tsbee.solve(distance_matrix)
 
         assert tour == [0]
 
@@ -99,7 +99,7 @@ class TestSolutionQuality:
         # For 3 cities, any tour is optimal
         distance_matrix = [[0, 10, 20], [10, 0, 15], [20, 15, 0]]
 
-        tour = tsp_solve.solve(distance_matrix)
+        tour = tsbee.solve(distance_matrix)
 
         # Check that we get a valid tour
         assert len(tour) == 3
@@ -120,7 +120,7 @@ class TestSolutionQuality:
             [10, 10, 1, 0],
         ]
 
-        tour = tsp_solve.solve(distance_matrix)
+        tour = tsbee.solve(distance_matrix)
 
         # Check that we get a valid tour
         assert len(tour) == 4
@@ -153,7 +153,7 @@ class TestSolutionQuality:
                     row.append(int(dist * 1000))
             distance_matrix.append(row)
 
-        tour = tsp_solve.solve(distance_matrix, time_limit=2.0)
+        tour = tsbee.solve(distance_matrix, time_limit=2.0)
 
         assert len(tour) == n
         assert set(tour) == set(range(n))
@@ -167,7 +167,7 @@ class TestEdgeCases:
         n = 5
         distance_matrix = [[0 if i == j else 100 for j in range(n)] for i in range(n)]
 
-        tour = tsp_solve.solve(distance_matrix)
+        tour = tsbee.solve(distance_matrix)
 
         # Check that we get a valid tour
         assert len(tour) == n
@@ -187,7 +187,7 @@ class TestEdgeCases:
             [2000000, 1500000, 0],
         ]
 
-        tour = tsp_solve.solve(distance_matrix)
+        tour = tsbee.solve(distance_matrix)
 
         # Check that we get a valid tour
         assert len(tour) == 3
@@ -210,7 +210,7 @@ class TestEdgeCases:
         # Run multiple times
         tours = []
         for _ in range(3):
-            tour = tsp_solve.solve(distance_matrix)
+            tour = tsbee.solve(distance_matrix)
             tours.append(tuple(tour))
 
         # Should produce the same result each time
@@ -274,7 +274,7 @@ class TestAsymmetry:
             [5, 5, 26, 12, 12, 8, 8, 0, 0, 5, 5, 5, 5, 26, 8, 8, 0],
         ]
 
-        tour = tsp_solve.solve(distance_matrix, 1)
+        tour = tsbee.solve(distance_matrix, 1)
 
         # Check that we get a valid tour
         assert len(tour) == 17

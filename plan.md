@@ -29,7 +29,7 @@ This is a high-performance Traveling Salesman Problem (TSP) solver written in Ru
 - [ ] Explain distance penalty system (pi values)
 
 ### 2. Testing Infrastructure (High Priority)
-- [ ] Add Python tests for the `tsp_solve` module
+- [ ] Add Python tests for the `tsbee` module
 - [ ] Create unit tests for each component in `/src/`
 - [ ] Add integration tests with various TSP instances
 - [ ] Test edge cases (empty input, single city, duplicate cities)
@@ -90,7 +90,7 @@ This is a high-performance Traveling Salesman Problem (TSP) solver written in Ru
 ## File Structure Reference
 
 ```
-tsp_solve/
+tsbee/
 ├── src/
 │   ├── main.rs          # CLI interface
 │   ├── lib.rs           # Python bindings
@@ -111,7 +111,7 @@ tsp_solve/
 1. Review the existing codebase, particularly `/src/solver.rs`
 2. Run existing tests: `cargo test`
 3. Build Python module: `maturin develop`
-4. Test Python integration: `python -c "import tsp_solve; print(tsp_solve.solve.__doc__)"`
+4. Test Python integration: `python -c "import tsbee; print(tsbee.solve.__doc__)"`
 5. Review pre-commit hooks: `pre-commit run --all-files`
 
 ## Key Algorithms to Understand

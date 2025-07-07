@@ -18,42 +18,32 @@ use crate::input::Input;
 /// Don't Look Bits (DLB) optimization.
 ///
 /// Args:
-///     distance_matrix (List[List[float]]): A symmetric N×N matrix where element [i][j]
-///         represents the distance from city i to city j. Distances can be floating-point
-///         numbers and will be scaled internally for precision.
-///         The matrix must be symmetric: distance[i][j] == distance[j][i].
+///     distance_matrix (List[List[float]]): An N×N matrix where element [i][j]
+///         represents the distance from city i to city j.
 ///     time_limit (Optional[float]): Maximum time in seconds to run the solver.
-///         If None, the solver runs until convergence. Default is None.
-///     scale_factor (Optional[float]): Factor to multiply distances by before converting
-///         to integers. Default is 1,000,000 (1e6). Higher values preserve more precision
-///         but may cause overflow for very large distances.
+///         If None, the solver runs until no significant improvement is found, anymore. Default is None.
 ///
 /// Returns:
-///     List[int]: Order of cities in the best tour (0-indexed)
+///     List[int]: Order of cities in the best tour found (0-indexed)
 ///
 /// Raises:
-///     ValueError: If the distance matrix is invalid (not square, not symmetric,
-///         contains negative values, or has invalid diagonal).
+///     ValueError: If the distance matrix is invalid (not square or has invalid diagonal).
 ///
 /// Example:
-///     >>> import tsp_solve
+///     >>> import tsbee
 ///     >>> # Distance matrix for 4 cities with floating-point distances
 ///     >>> distances = [
-///     ...     [0.0, 10.5, 15.3, 20.7],
-///     ...     [10.5, 0.0, 35.2, 25.1],
-///     ...     [15.3, 35.2, 0.0, 30.9],
-///     ...     [20.7, 25.1, 30.9, 0.0]
+///     ...     [0, 10, 15, 20],
+///     ...     [10, 0, 35, 25],
+///     ...     [15, 35, 0, 30],
+///     ...     [20, 25, 30, 0]
 ///     ... ]
-///     >>> tour = tsp_solve.solve(distances, time_limit=10.0)
-///     >>> print(f"Best tour: {tour}")
+///     >>> tour = tsbee.solve(distances, time_limit=1.0)
+///     >>> print(f"Best tour found: {tour}")
 #[pyfunction]
-#[pyo3(signature = (distance_matrix, time_limit=None, scale_factor=None))]
-fn solve(
-    distance_matrix: Vec<Vec<f64>>,
-    time_limit: Option<f64>,
-    scale_factor: Option<f64>,
-) -> PyResult<Vec<usize>> {
-    let scale = scale_factor.unwrap_or(1_000_000.0);
+#[pyo3(signature = (distance_matrix, time_limit=None))]
+fn solve(distance_matrix: Vec<Vec<f64>>, time_limit: Option<f64>) -> PyResult<Vec<usize>> {
+    let scale = 1_000_000.0;
     let raw_input = preprocess::RawInput::new(distance_matrix, time_limit, scale);
 
     // Validate the input
@@ -98,7 +88,7 @@ fn solve(
 /// city A to city B equals the distance from city B to city A.
 ///
 /// Example:
-///     >>> import tsp_solve
+///     >>> import tsbee
 ///     >>> import numpy as np
 ///     >>>
 ///     >>> # Generate random city coordinates
@@ -114,10 +104,10 @@ fn solve(
 ///     ...             distances[i, j] = np.linalg.norm(coords[i] - coords[j])
 ///     >>>
 ///     >>> # Solve TSP (distances are automatically scaled internally)
-///     >>> tour = tsp_solve.solve(distances.tolist())
+///     >>> tour = tsbee.solve(distances.tolist())
 ///     >>> print(f"Tour: {tour[:10]}...")  # First 10 cities
 #[pymodule]
-fn tsp_solve(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn tsbee(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(solve, m)?)?;
     Ok(())
 }

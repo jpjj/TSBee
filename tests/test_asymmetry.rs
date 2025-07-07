@@ -1,9 +1,9 @@
 use chrono::TimeDelta;
-use tsp_solve::domain::city::City;
-use tsp_solve::domain::route::Route;
-use tsp_solve::input::Input;
-use tsp_solve::penalties::distance::{DistanceMatrix, DistancePenalizer};
-use tsp_solve::solver::Solver;
+use tsbee::domain::city::City;
+use tsbee::domain::route::Route;
+use tsbee::input::Input;
+use tsbee::penalties::distance::{DistanceMatrix, DistancePenalizer};
+use tsbee::solver::Solver;
 #[test]
 fn test_br17() {
     let matrix = vec![
