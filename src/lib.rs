@@ -6,7 +6,6 @@ mod postprocess;
 mod preprocess;
 mod solution;
 pub mod solver;
-use postprocess::PySolution;
 use pyo3::prelude::*;
 use solver::Solver;
 
@@ -19,18 +18,18 @@ use crate::input::Input;
 /// Don't Look Bits (DLB) optimization.
 ///
 /// Args:
-///     distance_matrix (List[List[int]]): A symmetric N×N matrix where element [i][j]
-///         represents the distance from city i to city j. Distances must be integers.
+///     distance_matrix (List[List[float]]): A symmetric N×N matrix where element [i][j]
+///         represents the distance from city i to city j. Distances can be floating-point
+///         numbers and will be scaled internally for precision.
 ///         The matrix must be symmetric: distance[i][j] == distance[j][i].
 ///     time_limit (Optional[float]): Maximum time in seconds to run the solver.
 ///         If None, the solver runs until convergence. Default is None.
+///     scale_factor (Optional[float]): Factor to multiply distances by before converting
+///         to integers. Default is 1,000,000 (1e6). Higher values preserve more precision
+///         but may cause overflow for very large distances.
 ///
 /// Returns:
-///     PySolution: An object containing:
-///         - distance (int): Total distance of the best tour found
-///         - tour (List[int]): Order of cities in the best tour (0-indexed)
-///         - iterations (int): Number of iterations performed
-///         - time (float): Time taken in seconds
+///     List[int]: Order of cities in the best tour (0-indexed)
 ///
 /// Raises:
 ///     ValueError: If the distance matrix is invalid (not square, not symmetric,
@@ -38,20 +37,24 @@ use crate::input::Input;
 ///
 /// Example:
 ///     >>> import tsp_solve
-///     >>> # Distance matrix for 4 cities
+///     >>> # Distance matrix for 4 cities with floating-point distances
 ///     >>> distances = [
-///     ...     [0, 10, 15, 20],
-///     ...     [10, 0, 35, 25],
-///     ...     [15, 35, 0, 30],
-///     ...     [20, 25, 30, 0]
+///     ...     [0.0, 10.5, 15.3, 20.7],
+///     ...     [10.5, 0.0, 35.2, 25.1],
+///     ...     [15.3, 35.2, 0.0, 30.9],
+///     ...     [20.7, 25.1, 30.9, 0.0]
 ///     ... ]
-///     >>> solution = tsp_solve.solve(distances, time_limit=10.0)
-///     >>> print(f"Best tour: {solution.tour}")
-///     >>> print(f"Total distance: {solution.distance}")
+///     >>> tour = tsp_solve.solve(distances, time_limit=10.0)
+///     >>> print(f"Best tour: {tour}")
 #[pyfunction]
-#[pyo3(signature = (distance_matrix, time_limit=None))]
-fn solve(distance_matrix: Vec<Vec<i64>>, time_limit: Option<f64>) -> PyResult<PySolution> {
-    let raw_input = preprocess::RawInput::new(distance_matrix, time_limit);
+#[pyo3(signature = (distance_matrix, time_limit=None, scale_factor=None))]
+fn solve(
+    distance_matrix: Vec<Vec<f64>>,
+    time_limit: Option<f64>,
+    scale_factor: Option<f64>,
+) -> PyResult<Vec<usize>> {
+    let scale = scale_factor.unwrap_or(1_000_000.0);
+    let raw_input = preprocess::RawInput::new(distance_matrix, time_limit, scale);
 
     // Validate the input
     raw_input.validate()?;
@@ -70,9 +73,14 @@ fn solve(distance_matrix: Vec<Vec<i64>>, time_limit: Option<f64>) -> PyResult<Py
     if !symmetric_instance {
         solution_report = solution_report.desymmetrize(big_m);
     }
-    let py_solution = solution_report.into();
 
-    Ok(py_solution)
+    Ok(solution_report
+        .best_solution
+        .route
+        .sequence
+        .iter()
+        .map(|city| city.id())
+        .collect())
 }
 
 /// A high-performance Traveling Salesman Problem solver.
@@ -98,21 +106,18 @@ fn solve(distance_matrix: Vec<Vec<i64>>, time_limit: Option<f64>) -> PyResult<Py
 ///     >>> n_cities = 50
 ///     >>> coords = np.random.rand(n_cities, 2) * 100
 ///     >>>
-///     >>> # Calculate distance matrix
-///     >>> distances = np.zeros((n_cities, n_cities), dtype=int)
+///     >>> # Calculate distance matrix with floating-point precision
+///     >>> distances = np.zeros((n_cities, n_cities))
 ///     >>> for i in range(n_cities):
 ///     ...     for j in range(n_cities):
 ///     ...         if i != j:
-///     ...             dist = np.linalg.norm(coords[i] - coords[j])
-///     ...             distances[i, j] = int(dist * 100)  # Scale to integers
+///     ...             distances[i, j] = np.linalg.norm(coords[i] - coords[j])
 ///     >>>
-///     >>> # Solve TSP
-///     >>> solution = tsp_solve.solve(distances.tolist())
-///     >>> print(f"Tour length: {solution.distance}")
-///     >>> print(f"Tour: {solution.tour[:10]}...")  # First 10 cities
+///     >>> # Solve TSP (distances are automatically scaled internally)
+///     >>> tour = tsp_solve.solve(distances.tolist())
+///     >>> print(f"Tour: {tour[:10]}...")  # First 10 cities
 #[pymodule]
 fn tsp_solve(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<PySolution>()?;
     m.add_function(wrap_pyfunction!(solve, m)?)?;
     Ok(())
 }

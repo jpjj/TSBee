@@ -74,7 +74,6 @@ python test_parser.py
 - **Metrics**:
   - Solution quality (optimality gap %)
   - Runtime (seconds)
-  - Iterations performed
 
 ## Current Performance
 
@@ -100,7 +99,7 @@ Recent benchmark results on medium-sized instances:
 ### CSV Summary
 - Instance name, size, optimal distance
 - Best/average/worst gaps
-- Average runtime and iterations
+- Average runtime
 
 ### JSON Details
 - Complete results for each run
