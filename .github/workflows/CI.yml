@@ -162,17 +162,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - name: Install dependencies
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      - name: Create virtual environment and install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install maturin
+          uv venv
+          source .venv/bin/activate
+          uv pip install maturin
       - name: Build package
-        run: maturin develop --release
+        run: |
+          source .venv/bin/activate
+          maturin develop --release
       - name: Install benchmark dependencies
         run: |
-          pip install numpy pandas
+          source .venv/bin/activate
+          uv pip install numpy pandas
       - name: Run benchmarks
         run: |
+          source .venv/bin/activate
           cd benchmarks
           python run_ci_benchmarks.py
 
