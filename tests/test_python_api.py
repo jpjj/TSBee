@@ -5,8 +5,23 @@ These tests verify that the Python bindings work correctly and that
 the solver produces valid solutions for various input types.
 """
 
+from typing import List
+
 import pytest
 import tsp_solve
+
+
+def calculate_tour_distance(distance_matrix: List[List[int]], tour: List[int]) -> int:
+    """Calculate the total distance of a tour."""
+    n = len(tour)
+    total_distance = 0
+
+    for i in range(n):
+        from_city = tour[i]
+        to_city = tour[(i + 1) % n]
+        total_distance += distance_matrix[from_city][to_city]
+
+    return total_distance
 
 
 class TestBasicFunctionality:
@@ -15,7 +30,6 @@ class TestBasicFunctionality:
     def test_import(self):
         """Test that the module can be imported."""
         assert hasattr(tsp_solve, "solve")
-        assert hasattr(tsp_solve, "PySolution")
 
     def test_small_symmetric_matrix(self):
         """Test solving a small 4-city problem."""
@@ -26,31 +40,21 @@ class TestBasicFunctionality:
             [20, 25, 30, 0],
         ]
 
-        solution = tsp_solve.solve(distance_matrix)
-
-        # Check solution attributes
-        assert hasattr(solution, "distance")
-        assert hasattr(solution, "tour")
-        assert hasattr(solution, "iterations")
-        assert hasattr(solution, "time")
+        tour = tsp_solve.solve(distance_matrix)
 
         # Check solution validity
-        assert len(solution.tour) == 4
-        assert set(solution.tour) == {0, 1, 2, 3}
-        assert solution.distance > 0
-        assert solution.iterations > 0
-        assert solution.time >= 0
+        assert len(tour) == 4
+        assert set(tour) == {0, 1, 2, 3}
 
     def test_with_time_limit(self):
         """Test solver with time limit."""
         n = 20
         distance_matrix = [[abs(i - j) * 10 for j in range(n)] for i in range(n)]
 
-        solution = tsp_solve.solve(distance_matrix, time_limit=0.1)
+        tour = tsp_solve.solve(distance_matrix, time_limit=0.1)
 
-        assert solution.time <= 0.2  # Allow some overhead
-        assert len(solution.tour) == n
-        assert set(solution.tour) == set(range(n))
+        assert len(tour) == n
+        assert set(tour) == set(range(n))
 
 
 class TestInputValidation:
@@ -82,10 +86,9 @@ class TestInputValidation:
     def test_single_city(self):
         """Test single city case."""
         distance_matrix = [[0]]
-        solution = tsp_solve.solve(distance_matrix)
+        tour = tsp_solve.solve(distance_matrix)
 
-        assert solution.tour == [0]
-        assert solution.distance == 0
+        assert tour == [0]
 
 
 class TestSolutionQuality:
@@ -96,11 +99,16 @@ class TestSolutionQuality:
         # For 3 cities, any tour is optimal
         distance_matrix = [[0, 10, 20], [10, 0, 15], [20, 15, 0]]
 
-        solution = tsp_solve.solve(distance_matrix)
+        tour = tsp_solve.solve(distance_matrix)
+
+        # Check that we get a valid tour
+        assert len(tour) == 3
+        assert set(tour) == {0, 1, 2}
 
         # Calculate expected distance (all tours have same length for 3 cities)
         expected_distance = 10 + 15 + 20
-        assert solution.distance == expected_distance
+        actual_distance = calculate_tour_distance(distance_matrix, tour)
+        assert actual_distance == expected_distance
 
     def test_solution_improvement(self):
         """Test that the solver improves upon a naive solution."""
@@ -112,11 +120,16 @@ class TestSolutionQuality:
             [10, 10, 1, 0],
         ]
 
-        solution = tsp_solve.solve(distance_matrix)
+        tour = tsp_solve.solve(distance_matrix)
+
+        # Check that we get a valid tour
+        assert len(tour) == 4
+        assert set(tour) == {0, 1, 2, 3}
 
         # Optimal tour should connect the close pairs: 0-1 and 2-3
         # Total distance: 1 + 10 + 1 + 10 = 22
-        assert solution.distance == 22
+        actual_distance = calculate_tour_distance(distance_matrix, tour)
+        assert actual_distance == 22
 
     def test_larger_problem(self):
         """Test a larger problem to ensure scalability."""
@@ -140,11 +153,10 @@ class TestSolutionQuality:
                     row.append(int(dist * 1000))
             distance_matrix.append(row)
 
-        solution = tsp_solve.solve(distance_matrix, time_limit=2.0)
+        tour = tsp_solve.solve(distance_matrix, time_limit=2.0)
 
-        assert len(solution.tour) == n
-        assert set(solution.tour) == set(range(n))
-        assert solution.distance > 0
+        assert len(tour) == n
+        assert set(tour) == set(range(n))
 
 
 class TestEdgeCases:
@@ -155,11 +167,16 @@ class TestEdgeCases:
         n = 5
         distance_matrix = [[0 if i == j else 100 for j in range(n)] for i in range(n)]
 
-        solution = tsp_solve.solve(distance_matrix)
+        tour = tsp_solve.solve(distance_matrix)
+
+        # Check that we get a valid tour
+        assert len(tour) == n
+        assert set(tour) == set(range(n))
 
         # All tours have the same length
         expected_distance = 100 * n
-        assert solution.distance == expected_distance
+        actual_distance = calculate_tour_distance(distance_matrix, tour)
+        assert actual_distance == expected_distance
 
     def test_very_large_distances(self):
         """Test with very large distance values."""
@@ -170,9 +187,15 @@ class TestEdgeCases:
             [2000000, 1500000, 0],
         ]
 
-        solution = tsp_solve.solve(distance_matrix)
+        tour = tsp_solve.solve(distance_matrix)
 
-        assert solution.distance == 4500000
+        # Check that we get a valid tour
+        assert len(tour) == 3
+        assert set(tour) == {0, 1, 2}
+
+        # Check that the distance is correct
+        actual_distance = calculate_tour_distance(distance_matrix, tour)
+        assert actual_distance == 4500000
 
     def test_deterministic_behavior(self):
         """Test that solver produces consistent results."""
@@ -185,13 +208,13 @@ class TestEdgeCases:
         ]
 
         # Run multiple times
-        solutions = []
+        tours = []
         for _ in range(3):
-            solution = tsp_solve.solve(distance_matrix)
-            solutions.append(solution.distance)
+            tour = tsp_solve.solve(distance_matrix)
+            tours.append(tuple(tour))
 
         # Should produce the same result each time
-        assert len(set(solutions)) == 1
+        assert len(set(tours)) == 1
 
 
 class TestAsymmetry:
@@ -251,10 +274,11 @@ class TestAsymmetry:
             [5, 5, 26, 12, 12, 8, 8, 0, 0, 5, 5, 5, 5, 26, 8, 8, 0],
         ]
 
-        tsp_solve.solve(distance_matrix, 1)
+        tour = tsp_solve.solve(distance_matrix, 1)
 
-        # expected_distance = 39
-        # assert solution.distance == expected_distance
+        # Check that we get a valid tour
+        assert len(tour) == 17
+        assert set(tour) == set(range(17))
 
 
 if __name__ == "__main__":

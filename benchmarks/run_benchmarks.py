@@ -53,18 +53,13 @@ def run_single_benchmark(
         print(f"WARNING: Optimal distance mismatch for {instance_name}")
         print(f"  Expected: {optimal_distance}, Calculated: {calculated_optimal}")
 
-    for run in range(num_runs):
+    for _ in range(num_runs):
         start_time = time.time()
-        solution = tsp_solve.solve(distance_matrix, time_limit=time_limit)
+        tour = tsp_solve.solve(distance_matrix, time_limit=time_limit)
         end_time = time.time()
 
-        # Always calculate the actual tour distance ourselves
-        # (don't trust the solver's reported distance)
-        solution_distance = calculate_tour_distance(distance_matrix_np, solution.tour)
-
-        # Warn if solver did 0 iterations (might indicate insufficient time)
-        if solution.iterations == 0:
-            print(f"  Warning: 0 iterations for run {run + 1}")
+        # Calculate the actual tour distance
+        solution_distance = calculate_tour_distance(distance_matrix_np, tour)
 
         # Calculate optimality gap
         gap = (solution_distance - optimal_distance) / optimal_distance * 100
@@ -74,8 +69,7 @@ def run_single_benchmark(
                 "time": end_time - start_time,
                 "distance": solution_distance,
                 "gap": gap,
-                "iterations": solution.iterations,
-                "tour": solution.tour,
+                "tour": tour,
             }
         )
 
@@ -83,7 +77,6 @@ def run_single_benchmark(
     times = [r["time"] for r in results]
     gaps = [r["gap"] for r in results]
     distances = [r["distance"] for r in results]
-    iterations = [r["iterations"] for r in results]
 
     return {
         "instance": instance_name,
@@ -102,7 +95,6 @@ def run_single_benchmark(
         "std_gap": np.std(gaps),
         "min_gap": np.min(gaps),
         "max_gap": np.max(gaps),
-        "avg_iterations": np.mean(iterations),
         "all_results": results,
     }
 
@@ -140,7 +132,6 @@ def benchmark_instances(
             print(f"  Best found: {result['best_distance']} (gap: {result['min_gap']:.2f}%)")
             print(f"  Average gap: {result['avg_gap']:.2f}% ± {result['std_gap']:.2f}%")
             print(f"  Average time: {result['avg_time']:.3f}s ± {result['std_time']:.3f}s")
-            print(f"  Average iterations: {result['avg_iterations']:.0f}")
 
         except Exception as e:
             print(f"  ERROR loading {name}: {e}")
@@ -160,7 +151,6 @@ def benchmark_instances(
                 "Max Gap (%)": f"{r['max_gap']:.2f}",
                 "Avg Time (s)": f"{r['avg_time']:.3f}",
                 "Time Limit (s)": f"{r['time_limit']:.3f}",
-                "Avg Iterations": f"{r['avg_iterations']:.0f}",
             }
         )
 
