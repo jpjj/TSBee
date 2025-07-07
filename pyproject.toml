@@ -4,12 +4,31 @@ build-backend = "maturin"
 
 [project]
 name = "tsbee"
+description = "A fast TSP solver library with Python bindings"
+authors = [
+    {name = "Jens-Peter Joost", email = "jenspeter.joost@gmail.com"}
+]
+readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.8"
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
 ]
+keywords = ["tsp", "traveling-salesman", "optimization", "rust"]
 dynamic = ["version"]
 dependencies = [
     "matplotlib>=3.7.5",
