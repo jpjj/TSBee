@@ -8,7 +8,9 @@ use crate::domain::city::City;
 use crate::domain::route::Route;
 use crate::input::Input;
 use crate::local_move::LocalSearch;
-use crate::penalties::candidates::alpha_nearness::{get_alpha_candidates, get_alpha_candidates_v2};
+use crate::penalties::candidates::alpha_nearness::{
+    get_alpha_candidates, get_alpha_candidates_v2, get_nn_candidates,
+};
 use crate::penalties::candidates::held_karp::BoundCalculator;
 use crate::penalties::candidates::Candidates;
 use crate::penalties::distance::DistancePenalizer;
@@ -48,7 +50,12 @@ impl Solver {
             Some(limit) => limit,
             _ => n,
         };
-        let candidates = get_alpha_candidates_v2(&penalizer.distance_matrix, max_neighbors, true);
+        let candidates = if n <= 3 {
+            // For very small problems, use simple nearest neighbor candidates
+            get_nn_candidates(&penalizer.distance_matrix, n.saturating_sub(1))
+        } else {
+            get_alpha_candidates_v2(&penalizer.distance_matrix, max_neighbors, true)
+        };
         let cache = SolverCache::new(n);
         let rng = StdRng::seed_from_u64(42);
         Solver {
@@ -135,7 +142,7 @@ impl Solver {
         };
         // no max_no_improvement means we continue as long as iterations since last improvment is 0.
         result &= match self.parameters.max_no_improvement {
-            Some(limit) => limit < self.stats.iterations_since_last_improvement,
+            Some(limit) => self.stats.iterations_since_last_improvement < limit,
             None => true,
         };
         result
@@ -197,9 +204,57 @@ impl Solver {
         self.cache.dont_look_bits[new_solution.route.sequence[d].id()] = true;
     }
 
-    /// function for solving the tsp
+    /// Solves the Traveling Salesman Problem using an iterated local search algorithm.
+    ///
+    /// This is the main entry point for the TSP solver. It implements an advanced
+    /// iterated local search (ILS) algorithm with the following components:
+    ///
+    /// # Algorithm Overview
+    ///
+    /// 1. **Initialization**: Generate initial solution using nearest neighbor heuristic
+    /// 2. **Local Search**: Apply 3-opt moves until no improvement found
+    /// 3. **Diversification**: Use double-bridge kicks to escape local optima
+    /// 4. **Lower Bound**: Calculate Held-Karp bound on first iteration
+    /// 5. **Iteration**: Repeat steps 2-3 until termination criteria met
+    ///
+    /// # Key Features
+    ///
+    /// - **3-opt Local Search**: Considers all ways to remove and reconnect 3 edges
+    /// - **Don't Look Bits (DLB)**: Avoids redundant searches for efficiency
+    /// - **Alpha-nearness Candidates**: Reduces search space intelligently
+    /// - **Double-bridge Perturbation**: 4-opt moves to escape local optima
+    /// - **Held-Karp Lower Bound**: Provides optimality gap information
+    /// - **Adaptive Penalties**: Adjusts distances based on Lagrangian relaxation
+    ///
+    /// # Arguments
+    ///
+    /// * `dlb` - Whether to use Don't Look Bits optimization (recommended: true)
+    ///
+    /// # Returns
+    ///
+    /// A `SolutionReport` containing:
+    /// - Best tour found
+    /// - Total distance
+    /// - Execution statistics
+    /// - Lower bound information (if calculated)
+    ///
+    /// # Termination Criteria
+    ///
+    /// The algorithm stops when any of these conditions are met:
+    /// - Time limit exceeded (if specified)
+    /// - Maximum iterations reached (if specified)
+    /// - No improvement for N iterations (if specified)
+    /// - Local optimum reached with no parameters set
     pub fn solve(&mut self, dlb: bool) -> SolutionReport {
         self.stats.reset();
+
+        // Handle trivial cases
+        if self.n <= 3 {
+            // For 1, 2, or 3 cities, any tour is optimal
+            self.stats.time_taken = chrono::Utc::now() - self.stats.start_time;
+            return self.get_solution_report();
+        }
+
         self.generate_initial_solution();
 
         // run while global criterion is met (time, max iterations, ...)
@@ -255,7 +310,24 @@ impl Solver {
         self.get_solution_report()
     }
 
-    /// executes local search and returns true if better solution has been found
+    /// Executes one iteration of 3-opt local search.
+    ///
+    /// This method attempts to improve the current solution by applying 3-opt moves.
+    /// It uses the candidate list to efficiently search for improving moves and
+    /// updates the current solution if an improvement is found.
+    ///
+    /// # Arguments
+    ///
+    /// * `dlb` - Whether to use Don't Look Bits optimization
+    ///
+    /// # Returns
+    ///
+    /// `true` if an improving move was found and applied, `false` otherwise
+    ///
+    /// # Side Effects
+    ///
+    /// - Updates `self.solution_manager.current_solution` if improvement found
+    /// - Modifies Don't Look Bits in the cache
     fn run_local_search(&mut self, dlb: bool) -> bool {
         let mut local_move = LocalSearch::new(
             &self.penalizer.distance_matrix,

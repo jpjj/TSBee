@@ -51,35 +51,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     * 100.0;
             println!("Held-karp-gap: {:.2}.", precent_gap);
         }
-
-        // if sol1.best_solution != sol2.best_solution {
-        //     let precent_gap =
-        //         (sol1.best_solution.distance as f64 / sol2.best_solution.distance as f64 - 1.0)
-        //             * 100.0;
-        //     println!(
-        //         "different solutions detected at iteration {}: {:.2}.",
-        //         i, precent_gap
-        //     );
-        // }
     }
-    // let distances = solutions
-    //     .into_iter()
-    //     .map(|s| s.best_solution.distance)
-    //     .collect::<Vec<i64>>();
-    // println!("{}", distances.into_iter().sum::<i64>());
-    // Create a file to write to
-    // let file = File::create("nodontlookbits100k.csv")?;
-    // let mut writer = Writer::from_writer(file);
 
-    // // Write each element as a row
-    // for num in distances {
-    //     writer.write_record(&[num.to_string()])?;
-    // }
-
-    // // Flush the writer to ensure all data is written
-    // writer.flush()?;
-
-    // println!("CSV file created successfully!");
     Ok(())
-    // with don't look bits it is 24781
 }

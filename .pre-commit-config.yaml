@@ -37,12 +37,12 @@ repos:
         types: [rust]
         pass_filenames: false
 
-  # Python tests (if any are added)
+  # Python tests (with module build)
   - repo: local
     hooks:
       - id: pytest
         name: pytest
-        entry: pytest
+        entry: bash -c 'pip install -e . && pytest'
         language: system
         types: [python]
         pass_filenames: false
@@ -66,4 +66,5 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+        args: ['--maxkb=5000']
       - id: check-toml

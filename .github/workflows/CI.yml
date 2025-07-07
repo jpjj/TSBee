@@ -153,6 +153,29 @@ jobs:
           name: wheels-sdist
           path: dist
 
+  benchmarks:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install maturin
+      - name: Build package
+        run: maturin develop --release
+      - name: Install benchmark dependencies
+        run: |
+          pip install numpy pandas
+      - name: Run benchmarks
+        run: |
+          cd benchmarks
+          python run_ci_benchmarks.py
+
   release:
     name: Release
     runs-on: ubuntu-latest

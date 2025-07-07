@@ -61,6 +61,33 @@ impl<'a> LocalSearch<'a> {
         }
     }
 
+    /// Executes the 3-opt local search algorithm to improve the current tour.
+    ///
+    /// The 3-opt algorithm considers removing three edges from the tour and reconnecting
+    /// the three resulting segments in all possible ways to find an improvement. This
+    /// implementation uses several optimizations:
+    ///
+    /// 1. **Don't Look Bits (DLB)**: Skip cities that were part of a recent improvement
+    /// 2. **Candidate lists**: Only consider promising edges based on alpha-nearness
+    /// 3. **Sequential search**: Try 2-opt first, then extend to 3-opt if needed
+    /// 4. **First improvement**: Return immediately when an improvement is found
+    ///
+    /// # Arguments
+    ///
+    /// * `dlb` - Whether to use Don't Look Bits optimization
+    ///
+    /// # Returns
+    ///
+    /// The improved solution if found, otherwise the original solution
+    ///
+    /// # Algorithm Overview
+    ///
+    /// For each city c1 in the tour:
+    /// 1. Consider edge (c1, c2) where c2 is the predecessor of c1
+    /// 2. For each candidate c3 that could replace c2:
+    ///    - Try 2-opt move: remove (c1,c2) and (c3,c4), add (c1,c4) and (c2,c3)
+    ///    - If 2-opt fails, try 3-opt moves by considering a fifth city c5
+    /// 3. Return first improving move found
     pub(crate) fn execute_3opt(&mut self, dlb: bool) -> Solution {
         // preparation
         let mut current_solution = self.current_solution.clone();
@@ -280,16 +307,32 @@ impl<'a> LocalSearch<'a> {
         current_solution
     }
 
-    /// Tries to find an improving double bridge move by doing the following
-    /// 1. Calculate ALL illegal 2opt moves that create two cycles.
-    ///     Like in the 3opt, only consider the candidate edge for first edge addition.
-    /// 2. Sort these 2opt moves according by gain
-    ///     first for-loop: loop over the 2opt moves
-    ///     if gain is >= 0, break, no improvement to be found
-    ///     second for-loop: loop over the rest of the moves.
-    ///     if combined gain >= 0: break,
-    ///     if combined gain is <0, check if the two moves done together create a tour
-    ///     This is about whether a < b < c < d
+    /// Executes a double-bridge move to escape local optima.
+    ///
+    /// A double-bridge move is a 4-opt move that removes four edges and reconnects
+    /// the tour in a specific way that cannot be achieved by any sequence of 2-opt
+    /// or 3-opt moves. This makes it effective for escaping local optima.
+    ///
+    /// # Algorithm
+    ///
+    /// 1. **Find illegal 2-opt moves**: Identify all 2-opt moves that would create
+    ///    two separate cycles instead of one tour
+    /// 2. **Sort by gain**: Order these moves by potential improvement
+    /// 3. **Combine moves**: Find pairs of illegal moves that together create a valid tour
+    /// 4. **Apply best combination**: Execute the best double-bridge move found
+    ///
+    /// # Returns
+    ///
+    /// The improved solution if a beneficial double-bridge move is found,
+    /// otherwise the original solution
+    ///
+    /// # Example
+    ///
+    /// Given tour: 1-2-3-4-5-6-7-8-1
+    /// Remove edges: (1,2), (3,4), (5,6), (7,8)
+    /// Reconnect as: 1-4-3-6-5-8-7-2-1
+    ///
+    /// This reconnection cannot be achieved by 2-opt or 3-opt moves alone.
     pub(crate) fn execute_double_bridge(&mut self) -> Solution {
         let mut current_solution = self.current_solution.clone();
         // self.assert_correct_change(&current_solution);
