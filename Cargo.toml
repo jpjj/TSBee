@@ -23,3 +23,7 @@ default = ["extension-module"]
 
 [profile.release]
 debug = true
+
+[[example]]
+name = "ab_test_heap_mst"
+path = "examples/ab_test_heap_mst.rs"
