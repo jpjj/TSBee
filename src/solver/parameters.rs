@@ -21,7 +21,7 @@ impl Parameters {
             return Self {
                 max_iterations,
                 max_time,
-                max_no_improvement: Some(5),
+                max_no_improvement: Some(10),
                 max_neighbors,
             };
         }

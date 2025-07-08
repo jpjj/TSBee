@@ -182,7 +182,8 @@ fn print_rank_counter(alpha_cans: Candidates) {
     let mut rank_counter: Vec<f64> = vec![0.0; 100];
     for (i, city) in optimal_route.iter().enumerate() {
         let cans = alpha_cans.get_neighbors_out(&City(*city));
-        for j in 0..100 {
+        let cans_len = cans.len();
+        for j in 0..cans_len {
             if optimal_neighbors[i].contains(&cans[j].id()) {
                 rank_counter[j] += 1.0;
             }
@@ -213,10 +214,16 @@ fn test_correct_alpha_nearness_neighbors_att532() {
 fn test_correct_alpha_nearness_neighbors_improved_att532() {
     let mut dm = DistanceMatrix::new_att(read_att532());
     let upper_bound = 27686 * 1_000_000;
-    let mut bound_calculator =
-        BoundCalculator::new(dm.clone(), upper_bound, 5000, TimeDelta::seconds(3));
+    let alpha_cans = get_alpha_candidates(&dm, 20);
+    let mut bound_calculator = BoundCalculator::with_candidates(
+        dm.clone(),
+        alpha_cans,
+        upper_bound,
+        50000,
+        TimeDelta::seconds(3),
+    );
     let result = bound_calculator.run();
     dm.update_pi(result.pi.clone());
-    let alpha_cans = get_alpha_candidates(&dm, 532);
+    let alpha_cans = get_alpha_candidates(&dm, 10);
     print_rank_counter(alpha_cans);
 }

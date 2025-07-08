@@ -1,15 +1,21 @@
-use crate::{domain::city::City, penalties::distance::DistanceMatrix};
+use crate::{
+    domain::city::City,
+    penalties::{candidates::heap_mst::get_min_spanning_tree_randomized, distance::DistanceMatrix},
+};
 
 use super::{
     min_one_tree::MinOneTree,
     utils::{get_k_argmins_ordered, get_min_spanning_tree},
+    Candidates,
 };
 
 pub struct BoundCalculator {
     distance_matrix: DistanceMatrix,
+    candidates: Option<Candidates>,
     upper_bound: i64,
     max_iterations: u64,
     max_time: chrono::Duration,
+    use_heap_mst: bool,
 }
 
 #[derive(Clone)]
@@ -38,9 +44,28 @@ impl BoundCalculator {
     ) -> Self {
         Self {
             distance_matrix,
+            candidates: None,
             upper_bound,
             max_iterations,
             max_time,
+            use_heap_mst: false,
+        }
+    }
+
+    pub fn with_candidates(
+        distance_matrix: DistanceMatrix,
+        candidates: Candidates,
+        upper_bound: i64,
+        max_iterations: u64,
+        max_time: chrono::Duration,
+    ) -> Self {
+        Self {
+            distance_matrix,
+            candidates: Some(candidates),
+            upper_bound,
+            max_iterations,
+            max_time,
+            use_heap_mst: false,
         }
     }
 
@@ -63,7 +88,7 @@ impl BoundCalculator {
         let mut beta = 2.0;
         let mut pi = vec![0; n];
         let mut best_pi = pi.clone();
-        let mut best_min_1_tree = get_min_1_tree(&self.distance_matrix);
+        let mut best_min_1_tree = self.get_min_1_tree(&self.distance_matrix);
         let mut min_1_tree: MinOneTree;
         let start = chrono::Utc::now();
         let mut temp_dm = self.distance_matrix.clone();
@@ -77,7 +102,7 @@ impl BoundCalculator {
             } else {
                 temp_dm.update_pi(pi.clone());
                 // 1
-                min_1_tree = get_min_1_tree(&temp_dm);
+                min_1_tree = self.get_min_1_tree(&temp_dm);
                 // 2
             }
             let lower_bound = min_1_tree.score;
@@ -113,9 +138,31 @@ impl BoundCalculator {
         }
         HeldKarpResult::new(best_pi, best_min_1_tree, false)
     }
+
+    fn get_min_1_tree(&self, distance_matrix: &DistanceMatrix) -> MinOneTree {
+        let n = distance_matrix.len();
+        let spanning_tree = if self.use_heap_mst && self.candidates.is_some() {
+            get_min_spanning_tree_randomized(
+                distance_matrix,
+                self.candidates.as_ref().unwrap(),
+                n - 1,
+            )
+        } else {
+            get_min_spanning_tree(distance_matrix, n - 1)
+        };
+        let two_nearest_neighbors =
+            get_k_argmins_ordered(distance_matrix.row(n - 1), 2, Some(n - 1));
+        let score = spanning_tree.score
+            + distance_matrix.distance(City(n - 1), City(two_nearest_neighbors[0]))
+            + distance_matrix.distance(City(n - 1), City(two_nearest_neighbors[1]));
+        let mut edges = spanning_tree.edges.clone();
+        edges.push((City(n - 1), City(two_nearest_neighbors[0])));
+        edges.push((City(n - 1), City(two_nearest_neighbors[1])));
+        MinOneTree::new(score, edges)
+    }
 }
 
-fn get_min_1_tree(distance_matrix: &DistanceMatrix) -> MinOneTree {
+fn _get_min_1_tree_old(distance_matrix: &DistanceMatrix) -> MinOneTree {
     let n = distance_matrix.len();
     let spanning_tree = get_min_spanning_tree(distance_matrix, n - 1);
     let two_nearest_neighbors = get_k_argmins_ordered(distance_matrix.row(n - 1), 2, Some(n - 1));

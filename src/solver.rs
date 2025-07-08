@@ -33,6 +33,7 @@ pub struct Solver {
     candidates: Candidates,
     cache: SolverCache,
     rng: StdRng,
+    use_heap_mst: bool,
 }
 
 impl Solver {
@@ -45,7 +46,7 @@ impl Solver {
 
         let solution_manager = SolutionManager::new(current_solution);
         let stats = Stats::new();
-        let parameters = Parameters::new(None, time_limit, None, Some(10));
+        let parameters = Parameters::new(None, time_limit, None, Some(20));
         let max_neighbors = match parameters.max_neighbors {
             Some(limit) => limit,
             _ => n,
@@ -58,6 +59,7 @@ impl Solver {
         };
         let cache = SolverCache::new(n);
         let rng = StdRng::seed_from_u64(42);
+        let use_heap_mst = input.use_heap_mst;
         Solver {
             n,
             penalizer,
@@ -67,6 +69,7 @@ impl Solver {
             candidates,
             cache,
             rng,
+            use_heap_mst,
         }
     }
 
@@ -280,12 +283,22 @@ impl Solver {
                     Some(time) => (time - (chrono::Utc::now() - self.stats.start_time)) / 2,
                     None => TimeDelta::seconds(1),
                 };
-                let mut held_karp_calculator = BoundCalculator::new(
-                    self.penalizer.distance_matrix.clone(),
-                    upper_bound,
-                    max_iterations,
-                    max_time,
-                );
+                let mut held_karp_calculator = if self.use_heap_mst {
+                    BoundCalculator::with_candidates(
+                        self.penalizer.distance_matrix.clone(),
+                        self.candidates.clone(),
+                        upper_bound,
+                        max_iterations,
+                        max_time,
+                    )
+                } else {
+                    BoundCalculator::new(
+                        self.penalizer.distance_matrix.clone(),
+                        upper_bound,
+                        max_iterations,
+                        max_time,
+                    )
+                };
                 let held_carp_result = held_karp_calculator.run();
                 // if held_carp_result.optimal {
                 //     println!("optimal")

@@ -3,11 +3,14 @@ use crate::domain::city::City;
 use super::distance::DistanceMatrix;
 
 pub mod alpha_nearness;
+pub mod heap_mst;
 pub mod held_karp;
 mod min_one_tree;
-mod min_spanning_tree;
+pub mod min_spanning_tree;
 pub mod utils;
-#[derive(PartialEq, Debug)]
+
+pub use min_spanning_tree::MinSpanningTree;
+#[derive(PartialEq, Debug, Clone)]
 pub struct Candidates {
     candidates: Vec<Vec<City>>,
 }
