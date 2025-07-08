@@ -36,7 +36,7 @@ pub(super) fn get_k_argmins_ordered<T: Ord>(
 
 /// create a min spanning tree on the distance matrix. n says how many of the citiesof the distance matrix should be used.
 /// the last vertex might not be used to later add two vertices.
-pub(super) fn get_min_spanning_tree(distance_matrix: &DistanceMatrix, n: usize) -> MinSpanningTree {
+pub fn get_min_spanning_tree(distance_matrix: &DistanceMatrix, n: usize) -> MinSpanningTree {
     let mut min_cost: Vec<i64> = (0..n)
         .map(|i| distance_matrix.distance(City(0), City(i)))
         .collect();

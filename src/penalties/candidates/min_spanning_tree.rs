@@ -1,6 +1,6 @@
 use crate::domain::city::City;
 
-pub(super) struct MinSpanningTree {
+pub struct MinSpanningTree {
     pub score: i64,
     pub edges: Vec<(City, City)>,
 }
