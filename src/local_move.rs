@@ -11,7 +11,11 @@ use crate::{
 /// Returns relative position given of pos_a giben pos_b would be 0
 #[inline(always)]
 fn get_rel_pos(pos_a: usize, pos_b: usize, n: usize) -> usize {
-    (n + pos_a - pos_b) % n
+    if pos_a >= pos_b {
+        pos_a - pos_b
+    } else {
+        n + pos_a - pos_b
+    }
 }
 
 struct Illegal2OptMove {
