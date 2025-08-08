@@ -1,18 +1,26 @@
+pub mod att;
+pub mod euc_2d;
+pub mod geo;
+pub mod man_2d;
+pub mod max_2d;
 use std::marker::PhantomData;
-use std::ops::{Add, Mul, Sub};
 
 use crate::{city::City, problem::Problem};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Point<T>(pub T, pub T);
 
-pub struct Euclidian<T, X> {
-    n: usize,
-    points: Vec<Point<T>>,
-    _phantom_data: PhantomData<X>,
+pub trait DistanceMetric<T, X> {
+    fn compute(p1: &Point<T>, p2: &Point<T>) -> X;
 }
 
-impl<T, X> Euclidian<T, X> {
+pub struct PointsAndFunction<T, X, D> {
+    n: usize,
+    points: Vec<Point<T>>,
+    _phantom_data: PhantomData<(X, D)>,
+}
+
+impl<T, X, D> PointsAndFunction<T, X, D> {
     pub fn new(points: Vec<Point<T>>) -> Self {
         let n = points.len();
         Self {
@@ -21,13 +29,16 @@ impl<T, X> Euclidian<T, X> {
             _phantom_data: PhantomData,
         }
     }
+    pub fn size(&self) -> usize {
+        self.n
+    }
 }
 
-impl<T, X> Problem for Euclidian<T, X>
+impl<T, X, D> Problem for PointsAndFunction<T, X, D>
 where
-    T: Copy + Sub<Output = T> + Mul<Output = T> + Add<Output = T> + Into<f64>,
+    T: Copy,
     X: Copy,
-    f64: Into<X>,
+    D: DistanceMetric<T, X>,
 {
     type Distance = X;
 
@@ -35,13 +46,7 @@ where
         let p1 = &self.points[c1.0];
         let p2 = &self.points[c2.0];
 
-        let dx = p1.0 - p2.0;
-        let dy = p1.1 - p2.1;
-
-        let squared_distance = dx * dx + dy * dy;
-        let distance = squared_distance.into().sqrt();
-
-        distance.into()
+        D::compute(p1, p2)
     }
 
     fn size(&self) -> usize {
@@ -51,13 +56,15 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::problem::points_and_function::euc_2d::Euc2d;
+
     use super::*;
 
     #[test]
     fn test_euclidean_distance() {
         let points = vec![Point(0.0, 0.0), Point(3.0, 4.0), Point(6.0, 8.0)];
 
-        let euclidean: Euclidian<f64, f64> = Euclidian::new(points);
+        let euclidean: PointsAndFunction<f64, f64, Euc2d> = PointsAndFunction::new(points);
 
         assert_eq!(euclidean.distance(City(0), City(1)), 5.0);
         assert_eq!(euclidean.distance(City(0), City(2)), 10.0);
@@ -68,7 +75,7 @@ mod tests {
     fn test_integer_coords_float_distance() {
         let points = vec![Point(0i32, 0i32), Point(3i32, 4i32)];
 
-        let euclidean: Euclidian<i32, f64> = Euclidian::new(points);
+        let euclidean: PointsAndFunction<i32, f64, Euc2d> = PointsAndFunction::new(points);
 
         assert_eq!(euclidean.distance(City(0), City(1)), 5.0f64);
     }

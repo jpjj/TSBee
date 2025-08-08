@@ -3,7 +3,8 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use tsp::problem::distance_matrix::DistanceMatrix;
-use tsp::problem::euclidean::{Euclidian, Point};
+use tsp::problem::points_and_function::euc_2d::Euc2d;
+use tsp::problem::points_and_function::{Point, PointsAndFunction};
 
 #[derive(Debug, Clone)]
 pub enum ProblemType {
@@ -247,12 +248,12 @@ fn build_distance_matrix(
 
 pub fn load_euclidean_problem(
     path: &Path,
-) -> Result<Euclidian<f64, f64>, Box<dyn std::error::Error>> {
+) -> Result<PointsAndFunction<f64, f64, Euc2d>, Box<dyn std::error::Error>> {
     let data = parse_tsp_file(path)?;
 
     if let Some(coords) = data.node_coords {
         let points: Vec<Point<f64>> = coords.into_iter().map(|(x, y)| Point(x, y)).collect();
-        Ok(Euclidian::new(points))
+        Ok(PointsAndFunction::new(points))
     } else {
         Err("No node coordinates found in file".into())
     }
@@ -271,52 +272,10 @@ pub fn load_distance_matrix_problem(
     }
 }
 
-pub fn calculate_att_distance(x1: f64, y1: f64, x2: f64, y2: f64) -> i32 {
-    let xd = x1 - x2;
-    let yd = y1 - y2;
-    let rij = ((xd * xd + yd * yd) / 10.0).sqrt();
-    let tij = rij.round();
-    if tij < rij {
-        (tij + 1.0) as i32
-    } else {
-        tij as i32
-    }
-}
-
-pub fn calculate_geo_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> i32 {
-    const RRR: f64 = 6378.388;
-    const PI: f64 = std::f64::consts::PI;
-
-    let deg = lat1.floor();
-    let min = lat1 - deg;
-    let lat1_rad = PI * (deg + 5.0 * min / 3.0) / 180.0;
-
-    let deg = lon1.floor();
-    let min = lon1 - deg;
-    let lon1_rad = PI * (deg + 5.0 * min / 3.0) / 180.0;
-
-    let deg = lat2.floor();
-    let min = lat2 - deg;
-    let lat2_rad = PI * (deg + 5.0 * min / 3.0) / 180.0;
-
-    let deg = lon2.floor();
-    let min = lon2 - deg;
-    let lon2_rad = PI * (deg + 5.0 * min / 3.0) / 180.0;
-
-    let q1 = (lon1_rad - lon2_rad).cos();
-    let q2 = (lat1_rad - lat2_rad).cos();
-    let q3 = (lat1_rad + lat2_rad).cos();
-
-    let arg = 0.5 * ((1.0 + q1) * q2 - (1.0 - q1) * q3) + 1.0;
-    let distance = RRR * arg.acos();
-    (distance + 0.5) as i32
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::path::PathBuf;
-    use tsp::problem::Problem;
 
     #[test]
     fn test_parse_euclidean_tsp() {
@@ -336,11 +295,5 @@ mod tests {
             let problem = load_euclidean_problem(&path).unwrap();
             assert_eq!(problem.size(), 52);
         }
-    }
-
-    #[test]
-    fn test_att_distance() {
-        let dist = calculate_att_distance(6734.0, 1453.0, 2233.0, 10.0);
-        assert_eq!(dist, 1495);
     }
 }

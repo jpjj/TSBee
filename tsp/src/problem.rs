@@ -1,5 +1,5 @@
 pub mod distance_matrix;
-pub mod euclidean;
+pub mod points_and_function;
 use crate::city::City;
 
 pub trait Problem {

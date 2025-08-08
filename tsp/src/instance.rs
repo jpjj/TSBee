@@ -21,14 +21,15 @@ mod tests {
     use crate::{
         city::City,
         instance::Instance,
-        problem::euclidean::{Euclidian, Point},
+        problem::points_and_function::{Point, PointsAndFunction, euc_2d::Euc2d},
         solution::list::List,
     };
 
     #[test]
     fn test_instance() {
-        let problem = Euclidian::<i32, f64>::new(vec![Point(0, 0), Point(0, 3), Point(4, 3)]);
-        let solution = List::<Euclidian<i32, f64>>::new((0..3).map(City).collect());
+        let problem =
+            PointsAndFunction::<i32, f64, Euc2d>::new(vec![Point(0, 0), Point(0, 3), Point(4, 3)]);
+        let solution = List::<PointsAndFunction<i32, f64, Euc2d>>::new((0..3).map(City).collect());
         let instance = Instance::new(problem, solution);
         assert_eq!(instance.objective_value(), 12.0);
     }
