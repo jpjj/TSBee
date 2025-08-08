@@ -1,4 +1,4 @@
-use std::{iter::Sum, marker::PhantomData};
+use std::{iter::Sum, marker::PhantomData, ops::Index};
 
 use crate::{city::City, problem::Problem, solution::Solution};
 
@@ -16,6 +16,14 @@ impl<T> List<T> {
             vector,
             _phantom_data: PhantomData,
         }
+    }
+}
+
+impl<P> Index<usize> for List<P> {
+    type Output = City;
+
+    fn index(&self, idx: usize) -> &Self::Output {
+        &self.vector[idx]
     }
 }
 

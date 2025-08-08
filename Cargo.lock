@@ -3,5 +3,12 @@
 version = 4
 
 [[package]]
+name = "benchmarks"
+version = "0.1.0"
+dependencies = [
+ "tsp",
+]
+
+[[package]]
 name = "tsp"
 version = "0.1.0"
