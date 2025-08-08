@@ -1,0 +1,70 @@
+repos:
+  # Python formatting and linting with ruff
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.5
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # Rust formatting
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: cargo fmt --all -- --check
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+  # Rust linting
+  - repo: local
+    hooks:
+      - id: cargo-clippy
+        name: cargo clippy
+        entry: cargo clippy --all-targets --all-features -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+  # Rust tests
+  - repo: local
+    hooks:
+      - id: cargo-test
+        name: cargo test
+        entry: cargo test
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+  # Python tests (with module build)
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: bash -c 'pip install -e . && pytest'
+        language: system
+        types: [python]
+        pass_filenames: false
+        files: ^tests/.*\.py$
+
+  # Rust benchmarks (quick check only)
+  - repo: local
+    hooks:
+      - id: cargo-bench-check
+        name: cargo bench check
+        entry: cargo bench --no-run
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=5000']
+      - id: check-toml

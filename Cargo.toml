@@ -1,0 +1,3 @@
+[workspace]
+members = ["tsp"]
+resolver = "3"
