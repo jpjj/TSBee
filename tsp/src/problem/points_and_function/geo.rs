@@ -14,30 +14,23 @@ impl DistanceMetric<f64, i64> for Geo {
     }
 }
 
-fn nint(num: f64) -> f64 {
-    if num > 0.0 {
-        (num + 0.5).floor()
-    } else {
-        (num + 0.5).ceil()
-    }
-}
 pub fn calculate_geo_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> i64 {
     const RRR: f64 = 6378.388;
     const PI: f64 = f64::consts::PI;
 
-    let deg = nint(lat1);
+    let deg = lat1.trunc();
     let min = lat1 - deg;
     let lat1_rad = PI * (deg + 5.0 * min / 3.0) / 180.0;
 
-    let deg = nint(lon1);
+    let deg = lon1.trunc();
     let min = lon1 - deg;
     let lon1_rad = PI * (deg + 5.0 * min / 3.0) / 180.0;
 
-    let deg = nint(lat2);
+    let deg = lat2.trunc();
     let min = lat2 - deg;
     let lat2_rad = PI * (deg + 5.0 * min / 3.0) / 180.0;
 
-    let deg = nint(lon2);
+    let deg = lon2.trunc();
     let min = lon2 - deg;
     let lon2_rad = PI * (deg + 5.0 * min / 3.0) / 180.0;
 
