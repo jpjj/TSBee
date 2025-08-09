@@ -64,19 +64,19 @@ mod tests {
     fn test_euclidean_distance() {
         let points = vec![Point(0.0, 0.0), Point(3.0, 4.0), Point(6.0, 8.0)];
 
-        let euclidean: PointsAndFunction<f64, f64, Euc2d> = PointsAndFunction::new(points);
+        let euclidean: PointsAndFunction<f64, i64, Euc2d> = PointsAndFunction::new(points);
 
-        assert_eq!(euclidean.distance(City(0), City(1)), 5.0);
-        assert_eq!(euclidean.distance(City(0), City(2)), 10.0);
-        assert_eq!(euclidean.distance(City(1), City(2)), 5.0);
+        assert_eq!(euclidean.distance(City(0), City(1)), 5);
+        assert_eq!(euclidean.distance(City(0), City(2)), 10);
+        assert_eq!(euclidean.distance(City(1), City(2)), 5);
     }
 
     #[test]
     fn test_integer_coords_float_distance() {
-        let points = vec![Point(0i32, 0i32), Point(3i32, 4i32)];
+        let points = vec![Point(0.0, 0.0), Point(3.0, 4.0)];
 
-        let euclidean: PointsAndFunction<i32, f64, Euc2d> = PointsAndFunction::new(points);
+        let euclidean: PointsAndFunction<f64, i64, Euc2d> = PointsAndFunction::new(points);
 
-        assert_eq!(euclidean.distance(City(0), City(1)), 5.0f64);
+        assert_eq!(euclidean.distance(City(0), City(1)), 5);
     }
 }

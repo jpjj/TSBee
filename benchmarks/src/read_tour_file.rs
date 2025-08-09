@@ -26,9 +26,12 @@ pub fn read_tour_file<P>(path: &Path) -> Result<List<P>, Box<dyn std::error::Err
         }
 
         if in_tour_section {
-            if let Ok(city) = line.parse::<i32>() {
-                if city > 0 {
-                    tour.push(City((city - 1) as usize));
+            let row_of_cities: Vec<&str> = line.split_whitespace().collect();
+            for new_city in row_of_cities.iter() {
+                if let Ok(city) = new_city.parse::<i32>() {
+                    if city > 0 {
+                        tour.push(City((city - 1) as usize));
+                    }
                 }
             }
         }
@@ -41,22 +44,22 @@ pub fn read_tour_file<P>(path: &Path) -> Result<List<P>, Box<dyn std::error::Err
 mod tests {
     use std::path::PathBuf;
 
+    use crate::read_tour_file::read_tour_file;
+    use test_case::test_case;
     use tsp::{
         city::City,
         problem::distance_matrix::DistanceMatrix,
         solution::{Solution, list::List},
     };
 
-    use crate::read_tour_file::read_tour_file;
-
-    #[test]
-    fn test_read_tour_file() {
-        let path = PathBuf::from("data/problems/a280.opt.tour");
-        if path.exists() {
-            let solution: List<DistanceMatrix<i32>> = read_tour_file(&path).unwrap();
-            assert_eq!(solution.size(), 280);
-            assert_eq!(solution[0], City(0));
-            assert_eq!(solution[10], City(235));
-        }
+    #[test_case("a280", 280, 0, 279; "a280")]
+    #[test_case("gr24", 24, 15, 0; "gr24")]
+    fn test_read_tour_file(name: &str, size: usize, first_city_idx: usize, last_city_idx: usize) {
+        let path = PathBuf::from(format!("data/solutions/{name}.opt.tour"));
+        assert!(path.exists());
+        let solution: List<DistanceMatrix<i32>> = read_tour_file(&path).unwrap();
+        assert_eq!(solution.size(), size);
+        assert_eq!(solution[0], City(first_city_idx));
+        assert_eq!(solution[size - 1], City(last_city_idx));
     }
 }

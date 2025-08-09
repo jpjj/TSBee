@@ -1,23 +1,18 @@
-pub enum ATT {}
-use std::ops::{Add, Mul, Sub};
+//! Defined as here: http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp95.pdf
 
 use super::{DistanceMetric, Point};
 
-impl<T, X> DistanceMetric<T, X> for ATT
-where
-    T: Copy + Sub<Output = T> + Mul<Output = T> + Add<Output = T> + Into<f64>,
-    f64: Into<X>,
-{
-    fn compute(p1: &Point<T>, p2: &Point<T>) -> X {
+pub enum ATT {}
+impl DistanceMetric<f64, i64> for ATT {
+    fn compute(p1: &Point<f64>, p2: &Point<f64>) -> i64 {
         let dx = p1.0 - p2.0;
         let dy = p1.1 - p2.1;
 
-        let squared_distance = dx * dx + dy * dy;
-        let r = squared_distance.into().sqrt();
+        let squared_distance = (dx * dx + dy * dy) / 10.0;
+        let r = squared_distance.sqrt();
 
         let t = r.round();
         let distance = if t < r { t + 1.0 } else { t };
-
-        distance.into()
+        distance as i64
     }
 }

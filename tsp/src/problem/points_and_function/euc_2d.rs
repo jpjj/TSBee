@@ -1,18 +1,15 @@
+//! Defined as here: http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp95.pdf
+
 use super::{DistanceMetric, Point};
-use std::ops::{Add, Mul, Sub};
 pub enum Euc2d {}
-impl<T, X> DistanceMetric<T, X> for Euc2d
-where
-    T: Copy + Sub<Output = T> + Mul<Output = T> + Add<Output = T> + Into<f64>,
-    f64: Into<X>,
-{
-    fn compute(p1: &Point<T>, p2: &Point<T>) -> X {
+impl DistanceMetric<f64, i64> for Euc2d {
+    fn compute(p1: &Point<f64>, p2: &Point<f64>) -> i64 {
         let dx = p1.0 - p2.0;
         let dy = p1.1 - p2.1;
 
         let squared_distance = dx * dx + dy * dy;
-        let distance = squared_distance.into().sqrt();
+        let distance = squared_distance.sqrt();
 
-        distance.into()
+        (distance + 0.5) as i64
     }
 }
