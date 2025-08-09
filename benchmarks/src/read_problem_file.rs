@@ -12,11 +12,20 @@ pub fn read_problem_file(path: &Path) -> Result<TspProblem, Box<dyn std::error::
     let tsp_data = parse_tsp_file(path)?;
 
     let problem = match tsp_data.edge_weight_type {
-        EdgeWeightType::Euc2D | EdgeWeightType::Ceil2D => {
+        EdgeWeightType::Euc2D => {
             if let Some(coords) = tsp_data.node_coords {
                 let points: Vec<Point<f64>> =
                     coords.into_iter().map(|(x, y)| Point(x, y)).collect();
                 TspProblem::Euclidean(PointsAndFunction::new(points))
+            } else {
+                return Err("Expected node coordinates for Euclidean problem".into());
+            }
+        }
+        EdgeWeightType::Ceil2D => {
+            if let Some(coords) = tsp_data.node_coords {
+                let points: Vec<Point<f64>> =
+                    coords.into_iter().map(|(x, y)| Point(x, y)).collect();
+                TspProblem::Ceil(PointsAndFunction::new(points))
             } else {
                 return Err("Expected node coordinates for Euclidean problem".into());
             }
