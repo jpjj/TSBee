@@ -1,4 +1,5 @@
 pub mod att;
+pub mod ceil_2d;
 pub mod euc_2d;
 pub mod geo;
 pub mod man_2d;

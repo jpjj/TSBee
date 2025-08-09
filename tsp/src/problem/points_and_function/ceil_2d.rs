@@ -10,7 +10,6 @@ impl DistanceMetric<f64, i64> for Euc2d {
         let squared_distance = dx * dx + dy * dy;
         let distance = squared_distance.sqrt();
 
-        // (distance + 0.5) as i64
         distance.round() as i64
     }
 }

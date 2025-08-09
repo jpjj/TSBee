@@ -37,6 +37,7 @@ fn validate_instances_against_best_values() {
                 }
             }
             Err(_) => {
+                println!("Error loading instance: {instance_name}");
                 skipped_count += 1;
             }
         }
