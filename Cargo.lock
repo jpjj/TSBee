@@ -13,6 +13,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "candidates"
+version = "0.1.0"
+dependencies = [
+ "tsp",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

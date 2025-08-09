@@ -16,6 +16,10 @@ pub trait Problem {
     fn distance(&self, c1: City, c2: City) -> Self::Distance;
 
     fn size(&self) -> usize;
+
+    fn cities(&self) -> impl Iterator<Item = City> {
+        (0..self.size()).map(City)
+    }
 }
 
 pub enum TspProblem {
