@@ -1,6 +1,6 @@
-use std::{iter::Sum, marker::PhantomData, ops::Index};
+use std::{collections::HashSet, iter::Sum, marker::PhantomData, ops::Index};
 
-use crate::{city::City, problem::Problem, solution::Solution};
+use crate::{city::City, edge::Edge, problem::Problem, solution::Solution};
 
 pub struct List<P> {
     n: usize,
@@ -49,12 +49,22 @@ where
     fn size(&self) -> usize {
         self.n
     }
+
+    fn get_edges(&self) -> std::collections::HashSet<crate::edge::Edge> {
+        let mut set = HashSet::with_capacity(self.size());
+        self.vector.windows(2).for_each(|pair| {
+            set.insert(Edge::new(pair[0], pair[1]));
+        });
+        set.insert(Edge::new(self.vector[0], self.vector[self.size() - 1]));
+        set
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
         city::City,
+        edge::Edge,
         problem::{Problem, distance_matrix::DistanceMatrix},
         solution::{Solution, list::List},
     };
@@ -64,5 +74,6 @@ mod tests {
         let solution = List::<DistanceMatrix<i32>>::new((0..3).map(City).collect());
         assert_eq!(solution.distance(&problem), 6);
         assert_eq!(solution.size(), problem.size());
+        assert!(solution.get_edges().contains(&Edge::new(City(2), City(0))));
     }
 }
