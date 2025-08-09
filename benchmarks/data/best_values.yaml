@@ -7,19 +7,19 @@ bays29 : 2020
 berlin52 : 7542
 bier127 : 118282
 brazil58 : 25395
-brd14051 : 469388 # not optimal
+brd14051 : 469388 # not optimal, could not find optimal tour online
 brg180 : 1950
 burma14 : 3323
 ch130 : 6110
 ch150 : 6528
 d198 : 15780
 d493 : 35002
-d657 : 48912
+d657 : 48913 # not optimal, actual is 48912, rounding error?
 d1291 : 50801
 d1655 : 62128
 d2103 : 80450
 d15112 : 1573084
-d18512 : 645244 # not optimal
+d18512 : 645244 # not optimal, could not find optimal tour online
 dantzig42 : 699
 dsj1000 : 18660188
 eil51 : 426
@@ -63,8 +63,8 @@ pcb442 : 50778
 pcb1173 : 56892
 pcb3038 : 137694
 pla7397 : 23260728
-pla33810 : 66050599 # not optimal
-pla85900 : 142393738 # not optimal
+pla33810 : 66050599 # not optimal, could not find optimal tour online
+pla85900 : 142393738 # not optimal, could not find optimal tour online
 pr76 : 108159
 pr107 : 44303
 pr124 : 59030
