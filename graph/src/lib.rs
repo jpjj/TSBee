@@ -1,3 +1,5 @@
+mod delaunay;
+
 use std::iter::Sum;
 use tsp::{
     city::City,
@@ -43,8 +45,8 @@ impl<'a> AdjacencyMatrix<'a> {
 }
 
 pub struct AdjacencyList<'a> {
-    problem: &'a TspProblem,
-    list: Vec<Vec<City>>,
+    pub problem: &'a TspProblem,
+    pub list: Vec<Vec<City>>,
 }
 
 impl<'a> AdjacencyList<'a> {

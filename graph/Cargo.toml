@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 tsp = { path = "../tsp"}
+spade = "2.14"

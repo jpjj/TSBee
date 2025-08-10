@@ -33,6 +33,10 @@ impl<T, X, D> PointsAndFunction<T, X, D> {
     pub fn size(&self) -> usize {
         self.n
     }
+
+    pub fn points(&self) -> &[Point<T>] {
+        &self.points
+    }
 }
 
 impl<T, X, D> Problem for PointsAndFunction<T, X, D>
