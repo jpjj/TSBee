@@ -27,12 +27,12 @@ impl<'a> AdjacencyList<'a> {
     }
 }
 
-pub enum Graphs<'a> {
+pub enum Graph<'a> {
     Matrix(AdjacencyMatrix<'a>),
     List(AdjacencyList<'a>),
 }
 
-impl<'a> Graphs<'a> {
+impl<'a> Graph<'a> {
     pub fn weight(&self, c1: City, c2: City) -> i64 {
         match self {
             Self::Matrix(am) => am.problem.distance(c1, c2),
@@ -164,7 +164,7 @@ mod tests {
     fn test_graphs_weight_matrix() {
         let distance_matrix = create_test_distance_matrix();
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graphs::Matrix(adj_matrix);
+        let graph = Graph::Matrix(adj_matrix);
 
         assert_eq!(graph.weight(City(0), City(1)), 10);
         assert_eq!(graph.weight(City(1), City(2)), 35);
@@ -176,7 +176,7 @@ mod tests {
         let problem = create_test_problem();
         let list = vec![vec![City(1)], vec![City(0)], vec![], vec![]];
         let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graphs::List(adj_list);
+        let graph = Graph::List(adj_list);
 
         let weight = graph.weight(City(0), City(1));
         assert!(weight > 0);
@@ -186,7 +186,7 @@ mod tests {
     fn test_graphs_n_matrix() {
         let distance_matrix = create_test_distance_matrix();
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graphs::Matrix(adj_matrix);
+        let graph = Graph::Matrix(adj_matrix);
 
         assert_eq!(graph.n(), 4);
     }
@@ -196,7 +196,7 @@ mod tests {
         let problem = create_test_problem();
         let list = vec![vec![], vec![], vec![], vec![]];
         let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graphs::List(adj_list);
+        let graph = Graph::List(adj_list);
 
         assert_eq!(graph.n(), 4);
     }
@@ -205,7 +205,7 @@ mod tests {
     fn test_graphs_m_matrix() {
         let distance_matrix = create_test_distance_matrix();
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graphs::Matrix(adj_matrix);
+        let graph = Graph::Matrix(adj_matrix);
 
         assert_eq!(graph.m(), 6);
     }
@@ -220,7 +220,7 @@ mod tests {
             vec![City(1), City(2)],
         ];
         let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graphs::List(adj_list);
+        let graph = Graph::List(adj_list);
 
         assert_eq!(graph.m(), 4);
     }
@@ -229,7 +229,7 @@ mod tests {
     fn test_graphs_neighbors_out_matrix() {
         let distance_matrix = create_test_distance_matrix();
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graphs::Matrix(adj_matrix);
+        let graph = Graph::Matrix(adj_matrix);
 
         let neighbors: Vec<City> = graph.neighbors_out(City(0)).collect();
         assert_eq!(neighbors.len(), 3);
@@ -249,7 +249,7 @@ mod tests {
             vec![City(0)],
         ];
         let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graphs::List(adj_list);
+        let graph = Graph::List(adj_list);
 
         let neighbors: Vec<City> = graph.neighbors_out(City(0)).collect();
         assert_eq!(neighbors.len(), 2);
@@ -261,7 +261,7 @@ mod tests {
     fn test_graphs_neighbors_in_matrix() {
         let distance_matrix = create_test_distance_matrix();
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graphs::Matrix(adj_matrix);
+        let graph = Graph::Matrix(adj_matrix);
 
         let neighbors: Vec<City> = graph.neighbors_in(City(2)).collect();
         assert_eq!(neighbors.len(), 3);
@@ -276,7 +276,7 @@ mod tests {
         let problem = create_test_problem();
         let list = vec![vec![City(1), City(2)], vec![City(2)], vec![], vec![City(2)]];
         let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graphs::List(adj_list);
+        let graph = Graph::List(adj_list);
 
         let neighbors: Vec<City> = graph.neighbors_in(City(2)).collect();
         assert_eq!(neighbors.len(), 3);
@@ -289,7 +289,7 @@ mod tests {
     fn test_graphs_edges_matrix() {
         let distance_matrix = create_test_distance_matrix();
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graphs::Matrix(adj_matrix);
+        let graph = Graph::Matrix(adj_matrix);
 
         let edges: Vec<Edge> = graph.edges().collect();
         assert_eq!(edges.len(), 6);
@@ -312,7 +312,7 @@ mod tests {
             vec![City(1)],
         ];
         let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graphs::List(adj_list);
+        let graph = Graph::List(adj_list);
 
         let edges: Vec<Edge> = graph.edges().collect();
 
@@ -326,7 +326,7 @@ mod tests {
     fn test_graphs_cities() {
         let distance_matrix = create_test_distance_matrix();
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graphs::Matrix(adj_matrix);
+        let graph = Graph::Matrix(adj_matrix);
 
         let cities: Vec<City> = graph.cities().collect();
         assert_eq!(cities.len(), 4);
@@ -337,7 +337,7 @@ mod tests {
     fn test_graphs_complete_weight_matrix() {
         let distance_matrix = create_test_distance_matrix();
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graphs::Matrix(adj_matrix);
+        let graph = Graph::Matrix(adj_matrix);
 
         let total_weight = graph.complete_weight();
         assert_eq!(total_weight, 10 + 15 + 20 + 35 + 25 + 30);
@@ -353,7 +353,7 @@ mod tests {
             vec![City(0), City(1), City(2)],
         ];
         let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graphs::List(adj_list);
+        let graph = Graph::List(adj_list);
 
         let total_weight = graph.complete_weight();
         assert!(total_weight > 0);

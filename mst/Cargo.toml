@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 graph = { path = "../graph"}
+tsp = { path = "../tsp"}
 dmsort = "1.0.0"
