@@ -2,8 +2,8 @@ use crate::city::City;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Edge {
-    u: City,
-    v: City,
+    pub u: City,
+    pub v: City,
 }
 
 impl Edge {
