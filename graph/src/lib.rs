@@ -40,6 +40,10 @@ impl<'a> Graph<'a> {
         }
     }
 
+    pub fn edge_weight(&self, edge: Edge) -> i64 {
+        self.weight(edge.u, edge.v)
+    }
+
     pub fn n(&self) -> usize {
         match self {
             Self::Matrix(am) => am.problem.size(),
