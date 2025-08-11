@@ -88,7 +88,7 @@ pub fn get_min_1_tree<'a>(graph: &'a Graph<'a>, edges: Option<&mut [Edge]>) -> M
 #[cfg(test)]
 mod tests {
     use super::*;
-    use graph::AdjacencyMatrix;
+    use graph::{AdjacencyMatrix, WithoutPi};
     use tsp::problem::{TspProblem, distance_matrix::DistanceMatrix};
 
     fn create_test_distance_matrix() -> TspProblem {
@@ -106,7 +106,7 @@ mod tests {
         // MST should be 0-1, 0-2, two additional edges should be 0-3, 1-3
         let distance_matrix = create_test_distance_matrix();
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix);
+        let graph = Graph::Matrix(adj_matrix, WithoutPi);
 
         let min1_tree = get_min_1_tree(&graph, None);
         assert_eq!(min1_tree.mst_edges.len(), 2);
@@ -129,7 +129,7 @@ mod tests {
     fn test_get_min_1_tree_edges_with_sorted_edges() {
         let distance_matrix = create_test_distance_matrix();
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix);
+        let graph = Graph::Matrix(adj_matrix, WithoutPi);
 
         // Create sorted edges excluding those incident to last city (City(3))
         let mut edges_slice: Vec<Edge> = graph.edges().filter(|e| e.u.0 < 3 && e.v.0 < 3).collect();

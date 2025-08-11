@@ -93,7 +93,7 @@ impl UnionFind {
 
 #[cfg(test)]
 mod tests {
-    use graph::{AdjacencyList, AdjacencyMatrix};
+    use graph::{AdjacencyList, AdjacencyMatrix, WithoutPi};
     use tsp::{
         city::City,
         problem::{TspProblem, distance_matrix::DistanceMatrix},
@@ -107,7 +107,7 @@ mod tests {
     #[test]
     fn test_kruskal_mst() {
         let distance_matrix = create_test_distance_matrix();
-        let graph = Graph::Matrix(AdjacencyMatrix::new(&distance_matrix));
+        let graph = Graph::Matrix(AdjacencyMatrix::new(&distance_matrix), WithoutPi);
         let kruskal = Kruskal::new(&graph);
 
         let (mst_edges, total_weight) = kruskal.get_mst();
@@ -120,10 +120,10 @@ mod tests {
     fn test_disconnected_graph() {
         let distance_matrix = create_test_distance_matrix();
         let problem = distance_matrix;
-        let graph = Graph::List(AdjacencyList::new(
-            &problem,
-            vec![vec![City(1)], vec![], vec![City(3)], vec![]],
-        ));
+        let graph = Graph::List(
+            AdjacencyList::new(&problem, vec![vec![City(1)], vec![], vec![City(3)], vec![]]),
+            WithoutPi,
+        );
         let kruskal = Kruskal::new(&graph);
 
         let (mst_edges, total_weight) = kruskal.get_mst();
@@ -135,7 +135,7 @@ mod tests {
     #[test]
     fn test_stepwise_kruskal() {
         let distance_matrix = create_test_distance_matrix();
-        let graph = Graph::Matrix(AdjacencyMatrix::new(&distance_matrix));
+        let graph = Graph::Matrix(AdjacencyMatrix::new(&distance_matrix), WithoutPi);
         let kruskal = Kruskal::new(&graph);
         let mut edges: Vec<Edge> = graph.edges().collect();
         kruskal.sort_edges(&mut edges);
