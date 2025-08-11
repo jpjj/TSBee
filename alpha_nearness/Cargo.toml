@@ -5,3 +5,6 @@ edition = "2024"
 
 [dependencies]
 graph = { path = "../graph"}
+min1tree = { path = "../min1tree"}
+mst = { path = "../mst"}
+tsp = { path = "../tsp"}

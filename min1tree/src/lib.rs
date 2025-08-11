@@ -2,6 +2,29 @@ use graph::Graph;
 use mst::Kruskal;
 use tsp::{city::City, edge::Edge};
 
+pub struct Min1Tree {
+    pub mst_edges: Vec<Edge>,
+    pub smallest_edge_last_city: Edge,
+    pub second_smallest_edge_last_city: Edge,
+    pub total_weight: i64,
+}
+
+impl Min1Tree {
+    fn new(
+        mst_edges: Vec<Edge>,
+        smallest_edge_last_city: Edge,
+        second_smallest_edge_last_city: Edge,
+        total_weight: i64,
+    ) -> Self {
+        Min1Tree {
+            mst_edges,
+            smallest_edge_last_city,
+            second_smallest_edge_last_city,
+            total_weight,
+        }
+    }
+}
+
 pub fn get_2_smallest_args<T>(vector: &[T]) -> Option<(usize, usize)>
 where
     T: PartialOrd + Copy,
@@ -37,14 +60,11 @@ where
     Some((idx_min0, idx_min1))
 }
 
-pub fn get_min_1_tree_edges<'a>(
-    graph: &'a Graph<'a>,
-    edges: Option<&mut [Edge]>,
-) -> (Vec<Edge>, i64) {
+pub fn get_min_1_tree<'a>(graph: &'a Graph<'a>, edges: Option<&mut [Edge]>) -> Min1Tree {
     // Important: edges shall not contain any incident edges to City n-1!
     let kruskal = Kruskal::new(graph);
     let n = graph.n();
-    let (mut mst_edges, mut total_weight) = match edges {
+    let (mst_edges, mut total_weight) = match edges {
         Some(edges_slice) => kruskal.get_mst_from_sorted_edges(edges_slice),
         None => {
             // only edges not incident to City n-1
@@ -61,10 +81,8 @@ pub fn get_min_1_tree_edges<'a>(
     );
     let edge0 = Edge::new(City(n - 1), City(two_closest_neighors.0));
     let edge1 = Edge::new(City(n - 1), City(two_closest_neighors.1));
-    mst_edges.push(edge0);
-    mst_edges.push(edge1);
     total_weight += graph.edge_weight(edge0) + graph.edge_weight(edge1);
-    (mst_edges, total_weight)
+    Min1Tree::new(mst_edges, edge0, edge1, total_weight)
 }
 
 #[cfg(test)]
@@ -90,18 +108,21 @@ mod tests {
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
         let graph = Graph::Matrix(adj_matrix);
 
-        let (edges, total_weight) = get_min_1_tree_edges(&graph, None);
-        assert_eq!(edges.len(), 4);
+        let min1_tree = get_min_1_tree(&graph, None);
+        assert_eq!(min1_tree.mst_edges.len(), 2);
 
         // Total weight should be positive
-        assert_eq!(total_weight, 70);
-        let expected_edges = vec![
-            Edge::new(City(0), City(1)),
-            Edge::new(City(0), City(2)),
+        assert_eq!(min1_tree.total_weight, 70);
+        let expected_edges = vec![Edge::new(City(0), City(1)), Edge::new(City(0), City(2))];
+        assert_eq!(min1_tree.mst_edges, expected_edges);
+        assert_eq!(
+            min1_tree.smallest_edge_last_city,
             Edge::new(City(0), City(3)),
+        );
+        assert_eq!(
+            min1_tree.second_smallest_edge_last_city,
             Edge::new(City(1), City(3)),
-        ];
-        assert_eq!(edges, expected_edges);
+        );
     }
 
     #[test]
@@ -114,19 +135,22 @@ mod tests {
         let mut edges_slice: Vec<Edge> = graph.edges().filter(|e| e.u.0 < 3 && e.v.0 < 3).collect();
         edges_slice.sort_by_key(|e| graph.edge_weight(*e));
 
-        let (edges, total_weight) = get_min_1_tree_edges(&graph, Some(&mut edges_slice));
+        let min1_tree = get_min_1_tree(&graph, Some(&mut edges_slice));
 
-        assert_eq!(edges.len(), 4);
+        assert_eq!(min1_tree.mst_edges.len(), 2);
 
         // Total weight should be positive
-        assert_eq!(total_weight, 70);
-        let expected_edges = vec![
-            Edge::new(City(0), City(1)),
-            Edge::new(City(0), City(2)),
+        assert_eq!(min1_tree.total_weight, 70);
+        let expected_edges = vec![Edge::new(City(0), City(1)), Edge::new(City(0), City(2))];
+        assert_eq!(min1_tree.mst_edges, expected_edges);
+        assert_eq!(
+            min1_tree.smallest_edge_last_city,
             Edge::new(City(0), City(3)),
+        );
+        assert_eq!(
+            min1_tree.second_smallest_edge_last_city,
             Edge::new(City(1), City(3)),
-        ];
-        assert_eq!(edges, expected_edges);
+        );
     }
 
     #[test]

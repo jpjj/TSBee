@@ -13,6 +13,9 @@ name = "alpha_nearness"
 version = "0.1.0"
 dependencies = [
  "graph",
+ "min1tree",
+ "mst",
+ "tsp",
 ]
 
 [[package]]
