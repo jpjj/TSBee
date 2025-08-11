@@ -1,170 +1,106 @@
-// use graph::Graph;
-// use min1tree::get_min_1_tree;
-// use mst::Kruskal;
-// use std::collections::{HashMap, HashSet, VecDeque};
-// use tsp::{city::City, edge::Edge};
+use graph::{AdjacencyList, Graph};
+use min1tree::get_min_1_tree;
+use tsp::city::City;
 
-// pub fn get_alpha_values(graph: &Graph) -> Vec<i64> {
-//     let n = graph.n();
+#[inline]
+fn add_entry(flat_matrix: &mut [i64], entry: i64, idx1: usize, idx2: usize, n: usize) {
+    flat_matrix[idx1 * n + idx2] = entry;
+    flat_matrix[idx2 * n + idx1] = entry;
+}
 
-//     // Step 1: Calculate the min-1-tree of the graph
-//     let (mut min1tree_edges, _) = get_min_1_tree(graph, None);
+pub fn get_alpha_values(graph: &Graph) -> Vec<i64> {
+    // Step 1: Calculate the min-1-tree of the graph
+    let min1_tree = get_min_1_tree(graph, None);
 
-//     // Get all edges in the graph
-//     let all_edges: Vec<Edge> = graph.edges().collect();
-//     let mut alpha_values = Vec::with_capacity(all_edges.len());
+    // Step 2: Calculate alpha values for edges incident to city n-1
+    let n = graph.n();
+    let mut alpha_values = vec![0; n * n];
 
-//     // Convert min1tree edges to a HashSet for O(1) lookup
-//     let min1tree_set: HashSet<Edge> = min1tree_edges.iter().cloned().collect();
+    for city_idx in 0..=n - 2 {
+        let entry = if city_idx == min1_tree.smallest_edge_last_city.u.0 {
+            0
+        } else {
+            graph.weight(City(n - 1), City(city_idx))
+                - graph.edge_weight(min1_tree.second_smallest_edge_last_city)
+        };
+        add_entry(&mut alpha_values, entry, n - 1, city_idx, n);
+    }
 
-//     // Get the two smallest edges incident to City(n-1)
-//     let mut edges_to_last_city: Vec<(Edge, i64)> = graph
-//         .neighbors_out(City(n - 1))
-//         .map(|neighbor| {
-//             let edge = Edge::new(City(n - 1), neighbor);
-//             (edge, graph.edge_weight(edge))
-//         })
-//         .collect();
-//     edges_to_last_city.sort_by_key(|(_, weight)| *weight);
+    let mst_graph = Graph::List(AdjacencyList::from_edges(
+        graph.problem(),
+        min1_tree.mst_edges.clone(),
+    ));
 
-//     let second_smallest_weight = if edges_to_last_city.len() >= 2 {
-//         edges_to_last_city[1].1
-//     } else {
-//         0
-//     };
+    // Calculate all the others
+    for c in 0..=n - 2 {
+        let city_c = City(c);
+        let mut visited = vec![false; n - 1];
+        let mut max_weight = vec![i64::MIN; n - 1];
+        let mut stack = Vec::with_capacity(n - 1);
+        stack.push(c);
+        visited[c] = true;
+        while let Some(u) = stack.pop() {
+            let city_u = City(u);
+            for city_v in mst_graph.neighbors(City(u)) {
+                let v = city_v.0;
+                if !visited[v] {
+                    visited[v] = true;
+                    stack.push(v);
+                    max_weight[v] = std::cmp::max(max_weight[u], mst_graph.weight(city_u, city_v));
+                    add_entry(
+                        &mut alpha_values,
+                        std::cmp::max(0, mst_graph.weight(city_c, city_v) - max_weight[v]), // is 0 if edge belongs to MST.
+                        c,
+                        v,
+                        n,
+                    );
+                }
+            }
+        }
+    }
 
-//     // Create MST without City(n-1) and its edges for other calculations
-//     let edges_without_last_city: Vec<Edge> = graph
-//         .edges()
-//         .filter(|e| e.u.0 < n - 1 && e.v.0 < n - 1)
-//         .collect();
+    alpha_values
+}
 
-//     let kruskal = Kruskal::new(graph);
-//     let (mst_edges_without_last, _) = kruskal.get_mst_from_sorted_edges(&edges_without_last_city);
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use graph::AdjacencyMatrix;
+    use tsp::problem::{TspProblem, distance_matrix::DistanceMatrix};
 
-//     // Build adjacency list for MST without last city
-//     let mut mst_adj: HashMap<City, Vec<(City, i64)>> = HashMap::new();
-//     for edge in &mst_edges_without_last {
-//         let weight = graph.edge_weight(*edge);
-//         mst_adj.entry(edge.u).or_default().push((edge.v, weight));
-//         mst_adj.entry(edge.v).or_default().push((edge.u, weight));
-//     }
+    fn create_test_distance_matrix() -> TspProblem {
+        // 4x4 distance matrix:
+        // 0: [0, 10, 15, 20]
+        // 1: [10, 0, 35, 25]
+        // 2: [15, 35, 0, 30]
+        // 3: [20, 25, 30, 0]
+        let flat_matrix = vec![0, 10, 15, 20, 10, 0, 35, 25, 15, 35, 0, 30, 20, 25, 30, 0];
+        TspProblem::DistanceMatrix(DistanceMatrix::from_flat(flat_matrix))
+    }
 
-//     // Calculate alpha values for each edge
-//     for edge in all_edges {
-//         let alpha_value = if edge.u.0 == n - 1 || edge.v.0 == n - 1 {
-//             // Edge incident to City(n-1)
-//             if min1tree_set.contains(&edge) {
-//                 // Edge belongs to min-1-tree (one of two smallest edges)
-//                 0
-//             } else {
-//                 // Return w(e) - w(e_2) where e_2 is second smallest edge
-//                 graph.edge_weight(edge) - second_smallest_weight
-//             }
-//         } else {
-//             // Edge not incident to City(n-1)
-//             calculate_alpha_for_edge(edge, graph, &mst_adj)
-//         };
+    #[test]
+    fn test_get_alpha_values() {
+        let distance_matrix = create_test_distance_matrix();
+        let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
+        let graph = Graph::Matrix(adj_matrix);
 
-//         alpha_values.push(alpha_value);
-//     }
+        let alpha_values = get_alpha_values(&graph);
 
-//     alpha_values
-// }
+        // X are the edges of the MST, Y the additional edges to the last city, 0 are the diagonal entries:
+        // 0: [ 0, X, X, Y]
+        // 1: [ X, 0,  , Y]
+        // 2: [ X,  , 0,  ]
+        // 3: [ Y, Y,  , 0]
 
-// fn calculate_alpha_for_edge(
-//     edge: Edge,
-//     graph: &Graph,
-//     mst_adj: &HashMap<City, Vec<(City, i64)>>,
-// ) -> i64 {
-//     let edge_weight = graph.edge_weight(edge);
+        // We arrive at the following entries
+        // 0: [ 0, 0, 0, 0]
+        // 1: [ 0, 0,20, 0]
+        // 2: [ 0,20, 0, 5]
+        // 3: [ 0, 0, 5, 0]
 
-//     // Find the maximum weight on the path between edge.u and edge.v in the MST
-//     let max_path_weight = find_max_weight_on_path(edge.u, edge.v, mst_adj);
-
-//     edge_weight - max_path_weight
-// }
-
-// fn find_max_weight_on_path(
-//     start: City,
-//     end: City,
-//     mst_adj: &HashMap<City, Vec<(City, i64)>>,
-// ) -> i64 {
-//     if start == end {
-//         return 0;
-//     }
-
-//     let mut visited = HashSet::new();
-//     let mut queue = VecDeque::new();
-//     let mut parent: HashMap<City, (City, i64)> = HashMap::new();
-
-//     queue.push_back(start);
-//     visited.insert(start);
-
-//     // BFS to find path from start to end
-//     while let Some(current) = queue.pop_front() {
-//         if current == end {
-//             break;
-//         }
-
-//         if let Some(neighbors) = mst_adj.get(&current) {
-//             for &(neighbor, weight) in neighbors {
-//                 if !visited.contains(&neighbor) {
-//                     visited.insert(neighbor);
-//                     parent.insert(neighbor, (current, weight));
-//                     queue.push_back(neighbor);
-//                 }
-//             }
-//         }
-//     }
-
-//     // Reconstruct path and find maximum weight
-//     let mut max_weight = 0;
-//     let mut current = end;
-
-//     while let Some(&(prev, weight)) = parent.get(&current) {
-//         max_weight = max_weight.max(weight);
-//         current = prev;
-//         if current == start {
-//             break;
-//         }
-//     }
-
-//     max_weight
-// }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use graph::AdjacencyMatrix;
-//     use tsp::problem::distance_matrix::DistanceMatrix;
-
-//     fn create_test_distance_matrix() -> DistanceMatrix<i64> {
-//         // 4x4 distance matrix:
-//         // 0: [0, 10, 15, 20]
-//         // 1: [10, 0, 35, 25]
-//         // 2: [15, 35, 0, 30]
-//         // 3: [20, 25, 30, 0]
-//         let flat_matrix = vec![0, 10, 15, 20, 10, 0, 35, 25, 15, 35, 0, 30, 20, 25, 30, 0];
-//         DistanceMatrix::from_flat(flat_matrix)
-//     }
-
-//     #[test]
-//     fn test_get_alpha_values() {
-//         let distance_matrix = create_test_distance_matrix();
-//         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-//         let graph = Graph::Matrix(adj_matrix);
-
-//         let alpha_values = get_alpha_values(&graph);
-
-//         // We should get alpha values for all 6 edges in a complete graph of 4 cities
-//         assert_eq!(alpha_values.len(), 6);
-
-//         // Alpha values should be computed (exact values depend on the algorithm implementation)
-//         // This test mainly checks that the function runs without panic
-//         for alpha in &alpha_values {
-//             // Alpha values can be negative, zero, or positive
-//             assert!(alpha >= &std::i64::MIN && alpha <= &std::i64::MAX);
-//         }
-//     }
-// }
+        // reason: 20 is 35 - 15, where 15 is the greatest enty in the MST from city 1 to city 2.
+        //          5 is 30 - 25, where 25 is the second smallest incident edge weight of the last city 3.
+        let expected_values = vec![0, 0, 0, 0, 0, 0, 20, 0, 0, 20, 0, 5, 0, 0, 5, 0];
+        assert_eq!(expected_values, alpha_values);
+    }
+}

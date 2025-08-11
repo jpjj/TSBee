@@ -29,3 +29,7 @@ What if optional edges are given?
 In this case, only alpha values for the edges are wanted.
 To be checked in the future.
 Hence, we can skip the optional edge input for now.
+
+
+You can problably cut the calculation of alpha nearness at least in half using a smarter topological sorting strategy. But so far, this should suffice.
+Optimization can be done later. Bottleneck might also be the allocation of n*n entries. Let's see.

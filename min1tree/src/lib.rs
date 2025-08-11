@@ -73,7 +73,7 @@ pub fn get_min_1_tree<'a>(graph: &'a Graph<'a>, edges: Option<&mut [Edge]>) -> M
         }
     };
     let weights: Vec<_> = graph
-        .neighbors_out(City(n - 1))
+        .neighbors(City(n - 1))
         .map(|c| graph.weight(City(n - 1), c))
         .collect();
     let two_closest_neighors = get_2_smallest_args(&weights).expect(
@@ -89,16 +89,16 @@ pub fn get_min_1_tree<'a>(graph: &'a Graph<'a>, edges: Option<&mut [Edge]>) -> M
 mod tests {
     use super::*;
     use graph::AdjacencyMatrix;
-    use tsp::problem::distance_matrix::DistanceMatrix;
+    use tsp::problem::{TspProblem, distance_matrix::DistanceMatrix};
 
-    fn create_test_distance_matrix() -> DistanceMatrix<i64> {
+    fn create_test_distance_matrix() -> TspProblem {
         // 4x4 distance matrix:
         // 0: [0, 10, 15, 20]
         // 1: [10, 0, 35, 25]
         // 2: [15, 35, 0, 30]
         // 3: [20, 25, 30, 0]
         let flat_matrix = vec![0, 10, 15, 20, 10, 0, 35, 25, 15, 35, 0, 30, 20, 25, 30, 0];
-        DistanceMatrix::from_flat(flat_matrix)
+        TspProblem::DistanceMatrix(DistanceMatrix::from_flat(flat_matrix))
     }
 
     #[test]

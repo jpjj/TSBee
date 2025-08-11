@@ -100,9 +100,9 @@ mod tests {
     };
 
     use super::*;
-    fn create_test_distance_matrix() -> DistanceMatrix<i64> {
+    fn create_test_distance_matrix() -> TspProblem {
         let flat_matrix = vec![0, 10, 15, 20, 10, 0, 35, 25, 15, 35, 0, 30, 20, 25, 30, 0];
-        DistanceMatrix::from_flat(flat_matrix)
+        TspProblem::DistanceMatrix(DistanceMatrix::from_flat(flat_matrix))
     }
     #[test]
     fn test_kruskal_mst() {
@@ -119,7 +119,7 @@ mod tests {
     #[test]
     fn test_disconnected_graph() {
         let distance_matrix = create_test_distance_matrix();
-        let problem = TspProblem::DistanceMatrix(distance_matrix);
+        let problem = distance_matrix;
         let graph = Graph::List(AdjacencyList::new(
             &problem,
             vec![vec![City(1)], vec![], vec![City(3)], vec![]],

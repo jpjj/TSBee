@@ -3,15 +3,15 @@ mod delaunay;
 use tsp::{
     city::City,
     edge::Edge,
-    problem::{Problem, TspProblem, distance_matrix::DistanceMatrix},
+    problem::{Problem, TspProblem},
 };
 
 pub struct AdjacencyMatrix<'a> {
-    pub problem: &'a DistanceMatrix<i64>,
+    pub problem: &'a TspProblem,
 }
 
 impl<'a> AdjacencyMatrix<'a> {
-    pub fn new(problem: &'a DistanceMatrix<i64>) -> Self {
+    pub fn new(problem: &'a TspProblem) -> Self {
         Self { problem }
     }
 }
@@ -25,6 +25,15 @@ impl<'a> AdjacencyList<'a> {
     pub fn new(problem: &'a TspProblem, list: Vec<Vec<City>>) -> Self {
         Self { problem, list }
     }
+    pub fn from_edges(problem: &'a TspProblem, edges: Vec<Edge>) -> Self {
+        let mut list = vec![vec![]; problem.size()];
+        for edge in edges {
+            let (u, v) = (edge.u, edge.v);
+            list[u.0].push(v);
+            list[v.0].push(u);
+        }
+        Self { problem, list }
+    }
 }
 
 pub enum Graph<'a> {
@@ -33,6 +42,13 @@ pub enum Graph<'a> {
 }
 
 impl<'a> Graph<'a> {
+    pub fn problem(&self) -> &'a TspProblem {
+        match self {
+            Self::Matrix(am) => am.problem,
+            Self::List(al) => al.problem,
+        }
+    }
+
     pub fn weight(&self, c1: City, c2: City) -> i64 {
         match self {
             Self::Matrix(am) => am.problem.distance(c1, c2),
@@ -61,23 +77,11 @@ impl<'a> Graph<'a> {
         }
     }
 
-    pub fn neighbors_out(&self, c: City) -> impl Iterator<Item = City> {
+    pub fn neighbors(&self, c: City) -> impl Iterator<Item = City> {
         let n = self.n();
         let neighbors: Vec<City> = match self {
             Self::Matrix(_) => (0..n).filter(|&i| i != c.0).map(City).collect(),
             Self::List(al) => al.list[c.0].to_vec(),
-        };
-        neighbors.into_iter()
-    }
-
-    pub fn neighbors_in(&self, c: City) -> impl Iterator<Item = City> {
-        let n = self.n();
-        let neighbors: Vec<City> = match self {
-            Self::Matrix(_) => (0..n).filter(|&i| i != c.0).map(City).collect(),
-            Self::List(al) => (0..n)
-                .filter(|&i| al.list[i].contains(&c))
-                .map(City)
-                .collect(),
         };
         neighbors.into_iter()
     }
@@ -119,7 +123,10 @@ impl<'a> Graph<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tsp::problem::points_and_function::{Point, PointsAndFunction, euc_2d::Euc2d};
+    use tsp::problem::{
+        distance_matrix::DistanceMatrix,
+        points_and_function::{Point, PointsAndFunction, euc_2d::Euc2d},
+    };
 
     fn create_test_problem() -> TspProblem {
         let points = vec![
@@ -133,9 +140,9 @@ mod tests {
         TspProblem::Euclidean(problem)
     }
 
-    fn create_test_distance_matrix() -> DistanceMatrix<i64> {
+    fn create_test_distance_matrix() -> TspProblem {
         let flat_matrix = vec![0, 10, 15, 20, 10, 0, 35, 25, 15, 35, 0, 30, 20, 25, 30, 0];
-        DistanceMatrix::from_flat(flat_matrix)
+        TspProblem::DistanceMatrix(DistanceMatrix::from_flat(flat_matrix))
     }
 
     #[test]
@@ -230,44 +237,12 @@ mod tests {
     }
 
     #[test]
-    fn test_graphs_neighbors_out_matrix() {
+    fn test_graphs_neighbors_matrix() {
         let distance_matrix = create_test_distance_matrix();
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
         let graph = Graph::Matrix(adj_matrix);
 
-        let neighbors: Vec<City> = graph.neighbors_out(City(0)).collect();
-        assert_eq!(neighbors.len(), 3);
-        assert!(neighbors.contains(&City(1)));
-        assert!(neighbors.contains(&City(2)));
-        assert!(neighbors.contains(&City(3)));
-        assert!(!neighbors.contains(&City(0)));
-    }
-
-    #[test]
-    fn test_graphs_neighbors_out_list() {
-        let problem = create_test_problem();
-        let list = vec![
-            vec![City(1), City(3)],
-            vec![City(0), City(2)],
-            vec![City(1)],
-            vec![City(0)],
-        ];
-        let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graph::List(adj_list);
-
-        let neighbors: Vec<City> = graph.neighbors_out(City(0)).collect();
-        assert_eq!(neighbors.len(), 2);
-        assert!(neighbors.contains(&City(1)));
-        assert!(neighbors.contains(&City(3)));
-    }
-
-    #[test]
-    fn test_graphs_neighbors_in_matrix() {
-        let distance_matrix = create_test_distance_matrix();
-        let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix);
-
-        let neighbors: Vec<City> = graph.neighbors_in(City(2)).collect();
+        let neighbors: Vec<City> = graph.neighbors(City(2)).collect();
         assert_eq!(neighbors.len(), 3);
         assert!(neighbors.contains(&City(0)));
         assert!(neighbors.contains(&City(1)));
@@ -282,11 +257,12 @@ mod tests {
         let adj_list = AdjacencyList::new(&problem, list);
         let graph = Graph::List(adj_list);
 
-        let neighbors: Vec<City> = graph.neighbors_in(City(2)).collect();
-        assert_eq!(neighbors.len(), 3);
-        assert!(neighbors.contains(&City(0)));
-        assert!(neighbors.contains(&City(1)));
-        assert!(neighbors.contains(&City(3)));
+        // we migt need to fix this in the future, since this is not aaccording to a undirected graph's definition.
+        // however, deciding which node has which neighbors is practically the candidate definition.
+        // we have to see later in ejection chain definition if it makes sense to have both nodes to have references
+        // to eachother or only one.
+        let neighbors: Vec<City> = graph.neighbors(City(2)).collect();
+        assert_eq!(neighbors.len(), 0);
     }
 
     #[test]
