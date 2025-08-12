@@ -9,10 +9,18 @@ impl<'a> Kruskal<'a> {
     pub fn new(graph: &'a Graph<'a>) -> Self {
         Kruskal { graph }
     }
-    pub fn get_mst(&self) -> (Vec<Edge>, i64) {
-        let mut edges: Vec<Edge> = self.graph.edges().collect();
-        self.sort_edges(&mut edges);
-        self.get_mst_from_sorted_edges(&edges)
+    pub fn get_mst(&self, edges: Option<&mut [Edge]>) -> (Vec<Edge>, i64) {
+        match edges {
+            Some(real_edges) => {
+                self.sort_edges(real_edges);
+                self.get_mst_from_sorted_edges(real_edges)
+            }
+            None => {
+                let mut edges: Vec<Edge> = self.graph.edges().collect();
+                self.sort_edges(&mut edges);
+                self.get_mst_from_sorted_edges(&edges)
+            }
+        }
     }
 
     pub fn sort_edges(&self, edges: &mut [Edge]) {
@@ -93,7 +101,7 @@ impl UnionFind {
 
 #[cfg(test)]
 mod tests {
-    use graph::{AdjacencyList, AdjacencyMatrix, WithoutPi};
+    use graph::Graph;
     use tsp::{
         city::City,
         problem::{TspProblem, distance_matrix::DistanceMatrix},
@@ -107,10 +115,10 @@ mod tests {
     #[test]
     fn test_kruskal_mst() {
         let distance_matrix = create_test_distance_matrix();
-        let graph = Graph::Matrix(AdjacencyMatrix::new(&distance_matrix), WithoutPi);
+        let graph = Graph::new_matrix(&distance_matrix);
         let kruskal = Kruskal::new(&graph);
 
-        let (mst_edges, total_weight) = kruskal.get_mst();
+        let (mst_edges, total_weight) = kruskal.get_mst(None);
 
         assert_eq!(mst_edges.len(), 3);
         assert_eq!(total_weight, 45);
@@ -120,13 +128,10 @@ mod tests {
     fn test_disconnected_graph() {
         let distance_matrix = create_test_distance_matrix();
         let problem = distance_matrix;
-        let graph = Graph::List(
-            AdjacencyList::new(&problem, vec![vec![City(1)], vec![], vec![City(3)], vec![]]),
-            WithoutPi,
-        );
+        let graph = Graph::new_list(&problem, vec![vec![City(1)], vec![], vec![City(3)], vec![]]);
         let kruskal = Kruskal::new(&graph);
 
-        let (mst_edges, total_weight) = kruskal.get_mst();
+        let (mst_edges, total_weight) = kruskal.get_mst(None);
 
         assert_eq!(mst_edges.len(), 2);
         assert_eq!(total_weight, 40);
@@ -135,7 +140,7 @@ mod tests {
     #[test]
     fn test_stepwise_kruskal() {
         let distance_matrix = create_test_distance_matrix();
-        let graph = Graph::Matrix(AdjacencyMatrix::new(&distance_matrix), WithoutPi);
+        let graph = Graph::new_matrix(&distance_matrix);
         let kruskal = Kruskal::new(&graph);
         let mut edges: Vec<Edge> = graph.edges().collect();
         kruskal.sort_edges(&mut edges);

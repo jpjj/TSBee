@@ -1,4 +1,4 @@
-use graph::{AdjacencyList, Graph};
+use graph::Graph;
 use min1tree::get_min_1_tree;
 use tsp::city::City;
 
@@ -26,10 +26,8 @@ pub fn get_alpha_values(graph: &Graph) -> Vec<i64> {
         add_entry(&mut alpha_values, entry, n - 1, city_idx, n);
     }
 
-    let mst_graph = Graph::List(
-        AdjacencyList::from_edges(graph.problem(), min1_tree.mst_edges.clone()),
-        graph.state().clone(),
-    );
+    let mut mst_graph = Graph::new_list_from_edges(graph.problem(), min1_tree.mst_edges.clone());
+    mst_graph.pi = graph.pi.clone();
 
     // Calculate all the others
     for c in 0..=n - 2 {
@@ -65,7 +63,7 @@ pub fn get_alpha_values(graph: &Graph) -> Vec<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use graph::{AdjacencyMatrix, WithoutPi};
+    use graph::Graph;
     use tsp::problem::{TspProblem, distance_matrix::DistanceMatrix};
 
     fn create_test_distance_matrix() -> TspProblem {
@@ -81,8 +79,7 @@ mod tests {
     #[test]
     fn test_get_alpha_values() {
         let distance_matrix = create_test_distance_matrix();
-        let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix, WithoutPi);
+        let graph = Graph::new_matrix(&distance_matrix);
 
         let alpha_values = get_alpha_values(&graph);
 

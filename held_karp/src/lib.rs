@@ -1,83 +1,68 @@
-// use std::vec;
+/// This held-karp approach is inspired by this paper: https://users.cs.cf.ac.uk/C.L.Mumford/papers/HeldKarp.pdf
+use std::vec;
 
-// use graph::Graph;
-// use min1tree::{Min1Tree, get_min_1_tree};
-// use tsp::edge::Edge;
+use graph::Graph;
+use min1tree::get_min_1_tree;
+use tsp::edge::Edge;
 
-// pub fn run(graph: &Graph, bound: Option<i64>) -> (Vec<i64>, i64) {
-//     // iteratively:
-//     // 1. get min 1-tree
-//     // 2. get its lower bound being the sum of all edge weights - 2* sum(pi)
-//     // 3. get the degrees of each node minus 2 as a vector g
-//     // 4. calculate stepsize (polyak) t =
-//     // beta * (upper_bound - lower_bound) / L2_norm(g)²
-//     // beta is a parameter between 0 and 2. start with beta_0 = 1 or 2
-//     // 5. update pi = pi + t * g
+fn calc_stepsize(m: usize, big_m: usize, t_1: f64) -> f64 {
+    let part1_num = ((m - 1) * (2 * big_m - 5)) as f64;
+    let part1_den = (2 * (big_m - 1)) as f64;
+    let part2 = (m - 2) as f64;
+    let part3_num = ((m - 1) * (m - 2)) as f64;
+    let part3_den = (2 * (big_m - 1) * (big_m - 2)) as f64;
+    t_1 * (part1_num / part1_den - part2 + part3_num / part3_den)
+}
 
-//     // if L(k) fails to improve for some iterations, halve beta.
-//     let max_iterations = 1000;
-//     let max_time = chrono::TimeDelta::milliseconds(200);
-//     let max_iterations_no_imrovement = 100;
-//     let max_iterations_no_imrovement_beta_change = 10;
-//     let mut beta = 2.0;
+fn calc_new_pi(pi: Vec<i64>, t_i: f64, degrees: &[usize], degrees_prev: &[usize]) -> Vec<i64> {
+    pi.iter()
+        .enumerate()
+        .map(|(idx, val)| {
+            val + (t_i * (0.6 * (degrees[idx] - 2) as f64 + 0.4 * (degrees_prev[idx] - 2) as f64))
+                as i64
+        })
+        .collect()
+}
 
-//     let n = graph.n();
-//     let mut lower_bound_best = i64::MIN;
-//     let mut iterations = 0;
-//     let mut iterations_since_last_improvement_or_beta_change = 0;
-//     let mut pi = vec![0; n];
-//     let mut best_pi = pi.clone();
+pub fn run(graph: &mut Graph) -> (Vec<i64>, i64) {
+    // calculate the first min1tree for pi = 0
+    // According to Volgenant and Jonker:
+    // Calculate t1, the basic stepsize, based on the weight of the min1tree
+    //
+    // iteratively:
+    // Get the degrees of the min1tree d_i
+    // calculate stepsize  t_i according to the Volgenant and Jonker Strategy.
+    // Get pi_i given t_i, d_i and d_(i-1)
+    // Calculate the new min1tree for pi_i
+    let big_m = 1000;
 
-//     let mut edges: Vec<Edge> = graph.edges().collect();
-//     let mut best_min_1_tree = get_min_1_tree(graph, edges);
-//     let mut min_1_tree: Min1Tree;
-//     let start = chrono::Utc::now();
+    let n = graph.n();
+    // pi is already initialized to vec![0; n] by default in Graph
 
-//     while iterations < max_iterations && chrono::Utc::now() - start < max_time {
-//         if iterations == 0
-//             || iterations_since_last_improvement_or_beta_change
-//                 > max_iterations_no_imrovement_beta_change
-//         {
-//             beta /= 2.0;
-//             iterations_since_last_improvement_or_beta_change = 0;
-//             pi = best_pi.clone();
-//             min_1_tree = best_min_1_tree.clone();
-//         } else {
-//             temp_dm.update_pi(pi.clone());
-//             // 1
-//             min_1_tree = self.get_min_1_tree(&temp_dm);
-//             // 2
-//         }
-//         let lower_bound = min_1_tree.score;
-//         if lower_bound > lower_bound_best {
-//             lower_bound_best = lower_bound;
-//             best_pi = pi.clone();
-//             best_min_1_tree = min_1_tree.clone();
-//             iterations_since_last_improvement_or_beta_change = 0;
-//         }
-//         let degrees = min_1_tree.get_degrees();
-//         // 3
-//         let g: Vec<i64> = degrees.into_iter().map(|x| x as i64 - 2).collect();
-//         if g.iter().min() == Some(&0) {
-//             // all degrees are two, so we found a min 1-tree that is a hamiltonian cycle, optimal solution found.
-//             return HeldKarpResult::new(pi, min_1_tree, true);
-//         }
-//         // 4
-//         let t = beta * (self.upper_bound - lower_bound) as f64
-//             / g.iter().map(|x| x * x).sum::<i64>() as f64;
+    // no edges to City n - 1, that is the definition of our 1-tree here.
+    let mut edges: Vec<Edge> = graph.edges().filter(|e| e.v.0 < n - 1).collect();
 
-//         // 5
-//         let pi_new: Vec<i64> = pi
-//             .iter()
-//             .enumerate()
-//             .map(|(i, pi)| (*pi as f64 + t * g[i] as f64) as i64)
-//             .collect();
-//         if pi == pi_new {
-//             return HeldKarpResult::new(best_pi, best_min_1_tree, false);
-//         }
-//         pi = pi_new;
-//         iterations += 1;
-//         iterations_since_last_improvement_or_beta_change += 1;
-//     }
-//     HeldKarpResult::new(best_pi, best_min_1_tree, false)
-// }
+    let mut min_1_tree = get_min_1_tree(graph, Some(&mut edges));
+    let mut degrees = vec![2; n];
+    let mut degrees_prev;
+    let t_1 = min_1_tree.total_weight as f64 / (2.0 * n as f64);
+
+    for m in 1..=big_m {
+        degrees_prev = degrees.clone();
+        // Compute degrees from the min1tree edges
+        degrees = vec![0; n];
+        for edge in &min_1_tree.mst_edges {
+            degrees[edge.u.0] += 1;
+            degrees[edge.v.0] += 1;
+        }
+        // Add the two edges from the last city
+        degrees[n - 1] = 2;
+        degrees[min_1_tree.smallest_edge_last_city.u.0] += 1;
+        degrees[min_1_tree.second_smallest_edge_last_city.u.0] += 1;
+
+        let t_i = calc_stepsize(m, big_m, t_1);
+        graph.pi = calc_new_pi(graph.pi.clone(), t_i, &degrees, &degrees_prev);
+        min_1_tree = get_min_1_tree(graph, Some(&mut edges));
+    }
+    (vec![], 0)
+}

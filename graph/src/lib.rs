@@ -6,33 +6,6 @@ use tsp::{
     problem::{Problem, TspProblem},
 };
 
-// Trait for weight adjustment strategies
-pub trait WeightAdjuster: Clone {
-    fn adjust(&self, base: i64, c1: City, c2: City) -> i64;
-}
-
-// State type for graphs without Pi values
-#[derive(Debug, Clone, Default)]
-pub struct WithoutPi;
-
-// State type for graphs with Pi values
-#[derive(Debug, Clone)]
-pub struct WithPi {
-    pub pi: Vec<i64>,
-}
-
-impl WeightAdjuster for WithoutPi {
-    fn adjust(&self, base: i64, _c1: City, _c2: City) -> i64 {
-        base
-    }
-}
-
-impl WeightAdjuster for WithPi {
-    fn adjust(&self, base: i64, c1: City, c2: City) -> i64 {
-        base + self.pi[c1.0] + self.pi[c2.0]
-    }
-}
-
 pub struct AdjacencyMatrix<'a> {
     pub problem: &'a TspProblem,
 }
@@ -63,32 +36,58 @@ impl<'a> AdjacencyList<'a> {
     }
 }
 
-pub enum Graph<'a, State = WithoutPi> {
-    Matrix(AdjacencyMatrix<'a>, State),
-    List(AdjacencyList<'a>, State),
+pub struct Graph<'a> {
+    inner: GraphInner<'a>,
+    pub pi: Vec<i64>,
 }
 
-impl<'a, State: WeightAdjuster> Graph<'a, State> {
-    pub fn problem(&self) -> &'a TspProblem {
-        match self {
-            Self::Matrix(am, _) => am.problem,
-            Self::List(al, _) => al.problem,
+enum GraphInner<'a> {
+    Matrix(AdjacencyMatrix<'a>),
+    List(AdjacencyList<'a>),
+}
+
+impl<'a> Graph<'a> {
+    pub fn new_matrix(problem: &'a TspProblem) -> Self {
+        let n = problem.size();
+        Self {
+            inner: GraphInner::Matrix(AdjacencyMatrix::new(problem)),
+            pi: vec![0; n],
         }
     }
 
-    /// Get a reference to the state
-    pub fn state(&self) -> &State {
-        match self {
-            Self::Matrix(_, state) | Self::List(_, state) => state,
+    pub fn new_list(problem: &'a TspProblem, list: Vec<Vec<City>>) -> Self {
+        let n = problem.size();
+        Self {
+            inner: GraphInner::List(AdjacencyList::new(problem, list)),
+            pi: vec![0; n],
+        }
+    }
+
+    pub fn new_list_from_edges(problem: &'a TspProblem, edges: Vec<Edge>) -> Self {
+        let n = problem.size();
+        Self {
+            inner: GraphInner::List(AdjacencyList::from_edges(problem, edges)),
+            pi: vec![0; n],
+        }
+    }
+
+    pub fn problem(&self) -> &'a TspProblem {
+        match &self.inner {
+            GraphInner::Matrix(am) => am.problem,
+            GraphInner::List(al) => al.problem,
         }
     }
 
     pub fn weight(&self, c1: City, c2: City) -> i64 {
-        let (base, state) = match self {
-            Self::Matrix(am, state) => (am.problem.distance(c1, c2), state),
-            Self::List(al, state) => (al.problem.distance(c1, c2), state),
+        let base = match &self.inner {
+            GraphInner::Matrix(am) => am.problem.distance(c1, c2),
+            GraphInner::List(al) => al.problem.distance(c1, c2),
         };
-        state.adjust(base, c1, c2)
+        if self.pi.is_empty() {
+            base
+        } else {
+            base + self.pi[c1.0] + self.pi[c2.0]
+        }
     }
 
     pub fn edge_weight(&self, edge: Edge) -> i64 {
@@ -96,40 +95,49 @@ impl<'a, State: WeightAdjuster> Graph<'a, State> {
     }
 
     pub fn n(&self) -> usize {
-        match self {
-            Self::Matrix(am, _) => am.problem.size(),
-            Self::List(al, _) => al.problem.size(),
+        match &self.inner {
+            GraphInner::Matrix(am) => am.problem.size(),
+            GraphInner::List(al) => al.problem.size(),
         }
     }
 
     pub fn m(&self) -> usize {
-        match self {
-            Self::Matrix(am, _) => {
+        match &self.inner {
+            GraphInner::Matrix(am) => {
                 let n = am.problem.size();
                 n * (n - 1) / 2
             }
-            Self::List(al, _) => al.list.iter().map(|x| x.len()).sum::<usize>() / 2,
+            GraphInner::List(al) => al.list.iter().map(|x| x.len()).sum::<usize>() / 2,
         }
     }
 
     pub fn neighbors(&self, c: City) -> impl Iterator<Item = City> {
         let n = self.n();
-        let neighbors: Vec<City> = match self {
-            Self::Matrix(_, _) => (0..n).filter(|&i| i != c.0).map(City).collect(),
-            Self::List(al, _) => al.list[c.0].to_vec(),
+        let neighbors: Vec<City> = match &self.inner {
+            GraphInner::Matrix(_) => (0..n).filter(|&i| i != c.0).map(City).collect(),
+            GraphInner::List(al) => al.list[c.0].to_vec(),
         };
         neighbors.into_iter()
     }
 
+    pub fn degrees(&self) -> Vec<usize> {
+        match &self.inner {
+            GraphInner::Matrix(_) => vec![self.n() - 1; self.n()],
+            GraphInner::List(al) => (0..self.n())
+                .map(|c_idx| al.list[c_idx].len())
+                .collect::<Vec<usize>>(),
+        }
+    }
+
     pub fn edges(&self) -> impl Iterator<Item = Edge> {
-        let edges: Vec<Edge> = match self {
-            Self::Matrix(am, _) => {
+        let edges: Vec<Edge> = match &self.inner {
+            GraphInner::Matrix(am) => {
                 let n = am.problem.size();
                 (0..n)
                     .flat_map(|i| (i + 1..n).map(move |j| Edge::new(City(i), City(j))))
                     .collect()
             }
-            Self::List(al, _) => al
+            GraphInner::List(al) => al
                 .list
                 .iter()
                 .enumerate()
@@ -153,37 +161,6 @@ impl<'a, State: WeightAdjuster> Graph<'a, State> {
 
     pub fn complete_weight(&self) -> i64 {
         self.edges().map(|e| self.weight(e.u, e.v)).sum()
-    }
-}
-
-// State transition methods
-impl<'a> Graph<'a, WithoutPi> {
-    pub fn with_pi(self, pi: Vec<i64>) -> Graph<'a, WithPi> {
-        match self {
-            Graph::Matrix(am, _) => Graph::Matrix(am, WithPi { pi }),
-            Graph::List(al, _) => Graph::List(al, WithPi { pi }),
-        }
-    }
-}
-
-impl<'a> Graph<'a, WithPi> {
-    pub fn without_pi(self) -> Graph<'a, WithoutPi> {
-        match self {
-            Graph::Matrix(am, _) => Graph::Matrix(am, WithoutPi),
-            Graph::List(al, _) => Graph::List(al, WithoutPi),
-        }
-    }
-
-    pub fn get_pi(&self) -> &[i64] {
-        match self {
-            Graph::Matrix(_, state) | Graph::List(_, state) => &state.pi,
-        }
-    }
-
-    pub fn get_pi_mut(&mut self) -> &mut [i64] {
-        match self {
-            Graph::Matrix(_, state) | Graph::List(_, state) => &mut state.pi,
-        }
     }
 }
 
@@ -241,8 +218,7 @@ mod tests {
     #[test]
     fn test_graph_weight_matrix() {
         let distance_matrix = create_test_distance_matrix();
-        let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix, WithoutPi);
+        let graph = Graph::new_matrix(&distance_matrix);
 
         assert_eq!(graph.weight(City(0), City(1)), 10);
         assert_eq!(graph.weight(City(1), City(2)), 35);
@@ -253,8 +229,7 @@ mod tests {
     fn test_graph_weight_list() {
         let problem = create_test_problem();
         let list = vec![vec![City(1)], vec![City(0)], vec![], vec![]];
-        let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graph::List(adj_list, WithoutPi);
+        let graph = Graph::new_list(&problem, list);
 
         let weight = graph.weight(City(0), City(1));
         assert!(weight > 0);
@@ -263,8 +238,7 @@ mod tests {
     #[test]
     fn test_graph_n_matrix() {
         let distance_matrix = create_test_distance_matrix();
-        let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix, WithoutPi);
+        let graph = Graph::new_matrix(&distance_matrix);
 
         assert_eq!(graph.n(), 4);
     }
@@ -273,8 +247,7 @@ mod tests {
     fn test_graph_n_list() {
         let problem = create_test_problem();
         let list = vec![vec![], vec![], vec![], vec![]];
-        let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graph::List(adj_list, WithoutPi);
+        let graph = Graph::new_list(&problem, list);
 
         assert_eq!(graph.n(), 4);
     }
@@ -282,8 +255,7 @@ mod tests {
     #[test]
     fn test_graph_m_matrix() {
         let distance_matrix = create_test_distance_matrix();
-        let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix, WithoutPi);
+        let graph = Graph::new_matrix(&distance_matrix);
 
         assert_eq!(graph.m(), 6);
     }
@@ -297,8 +269,7 @@ mod tests {
             vec![City(0), City(3)],
             vec![City(1), City(2)],
         ];
-        let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graph::List(adj_list, WithoutPi);
+        let graph = Graph::new_list(&problem, list);
 
         assert_eq!(graph.m(), 4);
     }
@@ -306,8 +277,7 @@ mod tests {
     #[test]
     fn test_graph_neighbors_matrix() {
         let distance_matrix = create_test_distance_matrix();
-        let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix, WithoutPi);
+        let graph = Graph::new_matrix(&distance_matrix);
 
         let neighbors: Vec<City> = graph.neighbors(City(2)).collect();
         assert_eq!(neighbors.len(), 3);
@@ -321,8 +291,7 @@ mod tests {
     fn test_graph_neighbors_in_list() {
         let problem = create_test_problem();
         let list = vec![vec![City(1), City(2)], vec![City(2)], vec![], vec![City(2)]];
-        let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graph::List(adj_list, WithoutPi);
+        let graph = Graph::new_list(&problem, list);
 
         // we might need to fix this in the future, since this is not aaccording to a undirected graph's definition.
         // however, deciding which node has which neighbors is practically the candidate definition.
@@ -335,8 +304,7 @@ mod tests {
     #[test]
     fn test_graph_edges_matrix() {
         let distance_matrix = create_test_distance_matrix();
-        let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix, WithoutPi);
+        let graph = Graph::new_matrix(&distance_matrix);
 
         let edges: Vec<Edge> = graph.edges().collect();
         assert_eq!(edges.len(), 6);
@@ -358,8 +326,7 @@ mod tests {
             vec![City(0), City(1)],
             vec![City(1)],
         ];
-        let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graph::List(adj_list, WithoutPi);
+        let graph = Graph::new_list(&problem, list);
 
         let edges: Vec<Edge> = graph.edges().collect();
 
@@ -372,8 +339,7 @@ mod tests {
     #[test]
     fn test_graphs_cities() {
         let distance_matrix = create_test_distance_matrix();
-        let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix, WithoutPi);
+        let graph = Graph::new_matrix(&distance_matrix);
 
         let cities: Vec<City> = graph.cities().collect();
         assert_eq!(cities.len(), 4);
@@ -383,8 +349,7 @@ mod tests {
     #[test]
     fn test_graphs_complete_weight_matrix() {
         let distance_matrix = create_test_distance_matrix();
-        let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix, WithoutPi);
+        let graph = Graph::new_matrix(&distance_matrix);
 
         let total_weight = graph.complete_weight();
         assert_eq!(total_weight, 10 + 15 + 20 + 35 + 25 + 30);
@@ -399,8 +364,7 @@ mod tests {
             vec![City(0), City(1), City(3)],
             vec![City(0), City(1), City(2)],
         ];
-        let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graph::List(adj_list, WithoutPi);
+        let graph = Graph::new_list(&problem, list);
 
         let total_weight = graph.complete_weight();
         assert!(total_weight > 0);
@@ -409,27 +373,25 @@ mod tests {
     #[test]
     fn test_graph_with_pi() {
         let distance_matrix = create_test_distance_matrix();
-        let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
-        let graph = Graph::Matrix(adj_matrix, WithoutPi);
+        let mut graph = Graph::new_matrix(&distance_matrix);
 
-        // Test standard weight calculation
+        // Test standard weight calculation (pi is initialized with zeros)
         assert_eq!(graph.weight(City(0), City(1)), 10);
         assert_eq!(graph.weight(City(1), City(2)), 35);
 
-        // Add Pi values
-        let pi_values = vec![1, 2, 3, 4];
-        let pi_graph = graph.with_pi(pi_values);
+        // Update Pi values
+        graph.pi = vec![1, 2, 3, 4];
 
         // Test Pi-adjusted weight calculation
-        assert_eq!(pi_graph.weight(City(0), City(1)), 10 + 1 + 2); // 13
-        assert_eq!(pi_graph.weight(City(1), City(2)), 35 + 2 + 3); // 40
+        assert_eq!(graph.weight(City(0), City(1)), 10 + 1 + 2); // 13
+        assert_eq!(graph.weight(City(1), City(2)), 35 + 2 + 3); // 40
 
         // Test getting Pi values
-        assert_eq!(pi_graph.get_pi(), &[1, 2, 3, 4]);
+        assert_eq!(graph.pi, vec![1, 2, 3, 4]);
 
-        // Test removing Pi
-        let standard_graph = pi_graph.without_pi();
-        assert_eq!(standard_graph.weight(City(0), City(1)), 10);
+        // Test removing Pi (set back to zeros)
+        graph.pi = vec![0, 0, 0, 0];
+        assert_eq!(graph.weight(City(0), City(1)), 10);
     }
 
     #[test]
@@ -441,20 +403,18 @@ mod tests {
             vec![City(0), City(1), City(3)],
             vec![City(0), City(1), City(2)],
         ];
-        let adj_list = AdjacencyList::new(&problem, list);
-        let graph = Graph::List(adj_list, WithoutPi);
+        let mut graph = Graph::new_list(&problem, list);
 
         let base_weight = graph.weight(City(0), City(1));
 
-        // Add Pi values
-        let pi_values = vec![10, 20, 30, 40];
-        let pi_graph = graph.with_pi(pi_values);
+        // Update Pi values
+        graph.pi = vec![10, 20, 30, 40];
 
         // Test Pi-adjusted weight
-        assert_eq!(pi_graph.weight(City(0), City(1)), base_weight + 10 + 20);
+        assert_eq!(graph.weight(City(0), City(1)), base_weight + 10 + 20);
         assert_eq!(
-            pi_graph.weight(City(2), City(3)),
-            pi_graph.problem().distance(City(2), City(3)) + 30 + 40
+            graph.weight(City(2), City(3)),
+            graph.problem().distance(City(2), City(3)) + 30 + 40
         );
     }
 }
