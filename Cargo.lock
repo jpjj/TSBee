@@ -138,6 +138,7 @@ dependencies = [
 name = "held_karp"
 version = "0.1.0"
 dependencies = [
+ "benchmarks",
  "chrono",
  "graph",
  "min1tree",

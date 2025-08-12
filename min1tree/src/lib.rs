@@ -29,7 +29,7 @@ impl<'a> Min1Tree<'a> {
             total_weight,
         }
     }
-    pub fn degrees(&self) -> Vec<usize> {
+    pub fn degrees(&self) -> Vec<i32> {
         let n = self.graph.n();
         let mut degrees = vec![0; n];
         for edge in &self.mst_edges {

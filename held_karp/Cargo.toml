@@ -8,3 +8,6 @@ chrono = "0.4.41"
 graph = { path = "../graph"}
 min1tree = { path = "../min1tree"}
 tsp = { path = "../tsp"}
+
+[dev-dependencies]
+benchmarks = { path = "../benchmarks"}
