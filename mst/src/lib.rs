@@ -9,7 +9,7 @@ impl<'a> Kruskal<'a> {
     pub fn new(graph: &'a Graph<'a>) -> Self {
         Kruskal { graph }
     }
-    pub fn get_mst(&self, edges: Option<&mut [Edge]>) -> (Vec<Edge>, i64) {
+    pub fn get_mst(&self, edges: Option<&mut [Edge]>) -> (Vec<Edge>, f64) {
         match edges {
             Some(real_edges) => {
                 self.sort_edges(real_edges);
@@ -24,13 +24,18 @@ impl<'a> Kruskal<'a> {
     }
 
     pub fn sort_edges(&self, edges: &mut [Edge]) {
-        dmsort::sort_by_key(edges, |e: &Edge| self.graph.weight(e.u, e.v));
+        edges.sort_by(|a, b| {
+            self.graph
+                .weight(a.u, a.v)
+                .partial_cmp(&self.graph.weight(b.u, b.v))
+                .unwrap()
+        });
     }
 
-    pub fn get_mst_from_sorted_edges(&self, edges: &[Edge]) -> (Vec<Edge>, i64) {
+    pub fn get_mst_from_sorted_edges(&self, edges: &[Edge]) -> (Vec<Edge>, f64) {
         let mut uf = UnionFind::new(self.graph.n());
         let mut mst_edges = Vec::with_capacity(self.graph.n());
-        let mut total_weight = 0;
+        let mut total_weight = 0.0;
 
         for edge in edges.iter() {
             if uf.union(edge.u.0, edge.v.0) {
@@ -109,7 +114,10 @@ mod tests {
 
     use super::*;
     fn create_test_distance_matrix() -> TspProblem {
-        let flat_matrix = vec![0, 10, 15, 20, 10, 0, 35, 25, 15, 35, 0, 30, 20, 25, 30, 0];
+        let flat_matrix = vec![
+            0.0, 10.0, 15.0, 20.0, 10.0, 0.0, 35.0, 25.0, 15.0, 35.0, 0.0, 30.0, 20.0, 25.0, 30.0,
+            0.0,
+        ];
         TspProblem::DistanceMatrix(DistanceMatrix::from_flat(flat_matrix))
     }
     #[test]
@@ -121,7 +129,7 @@ mod tests {
         let (mst_edges, total_weight) = kruskal.get_mst(None);
 
         assert_eq!(mst_edges.len(), 3);
-        assert_eq!(total_weight, 45);
+        assert_eq!(total_weight, 45.0);
     }
 
     #[test]
@@ -134,7 +142,7 @@ mod tests {
         let (mst_edges, total_weight) = kruskal.get_mst(None);
 
         assert_eq!(mst_edges.len(), 2);
-        assert_eq!(total_weight, 40);
+        assert_eq!(total_weight, 40.0);
     }
 
     #[test]
@@ -146,6 +154,6 @@ mod tests {
         kruskal.sort_edges(&mut edges);
         let (mst_edges, total_weight) = kruskal.get_mst_from_sorted_edges(&edges);
         assert_eq!(mst_edges.len(), 3);
-        assert_eq!(total_weight, 45);
+        assert_eq!(total_weight, 45.0);
     }
 }

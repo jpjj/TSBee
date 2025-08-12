@@ -14,17 +14,16 @@ fn calc_stepsize(m: i32, big_m: i32, t_1: f64) -> f64 {
     t_1 * (part1_num / part1_den - part2 + part3_num / part3_den)
 }
 
-fn calc_new_pi(pi: Vec<i64>, t_i: f64, degrees: &[i32], degrees_prev: &[i32]) -> Vec<i64> {
+fn calc_new_pi(pi: Vec<f64>, t_i: f64, degrees: &[i32], degrees_prev: &[i32]) -> Vec<f64> {
     pi.iter()
         .enumerate()
         .map(|(idx, val)| {
             val + (t_i * (0.6 * (degrees[idx] - 2) as f64 + 0.4 * (degrees_prev[idx] - 2) as f64))
-                as i64
         })
         .collect()
 }
 
-pub fn run(graph: &mut Graph) -> (Vec<i64>, i64) {
+pub fn run(graph: &mut Graph) -> (Vec<f64>, f64) {
     // calculate the first min1tree for pi = 0
     // According to Volgenant and Jonker:
     // Calculate t1, the basic stepsize, based on the weight of the min1tree
@@ -79,28 +78,15 @@ mod tests {
         let mut graph = Graph::new_matrix(&problem);
 
         // Run the Held-Karp algorithm
-        let (_pi, _) = run(&mut graph);
+        let (_pi, held_karp_bound) = run(&mut graph);
 
         // The optimal solution for berlin52 is 7542
         // The Held-Karp bound should be a lower bound, so it should be <= 7542
-        // assert!(
-        //     held_karp_bound <= 7542,
-        //     "Held-Karp bound {} exceeds optimal solution 7542",
-        //     held_karp_bound
-        // );
+        assert!(held_karp_bound <= 7542.0001);
 
         // The bound should also be reasonably close to the optimal
         // Typically within 1-2% for good implementations
-        // let ratio = held_karp_bound as f64 / 7542.0;
-        // assert!(
-        //     ratio > 0.99,
-        //     "Held-Karp bound {} is too far from optimal (ratio: {:.2}%)",
-        //     held_karp_bound,
-        //     ratio * 100.0
-        // );
-
-        // println!("Held-Karp bound for berlin52: {}", held_karp_bound);
-        // println!("Optimal solution: 7542");
-        // println!("Gap: {:.2}%", (1.0 - ratio) * 100.0);
+        let ratio = held_karp_bound / 7542.0;
+        assert!(ratio > 0.99);
     }
 }

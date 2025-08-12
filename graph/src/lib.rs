@@ -38,7 +38,7 @@ impl<'a> AdjacencyList<'a> {
 
 pub struct Graph<'a> {
     inner: GraphInner<'a>,
-    pub pi: Vec<i64>,
+    pub pi: Vec<f64>,
 }
 
 enum GraphInner<'a> {
@@ -51,7 +51,7 @@ impl<'a> Graph<'a> {
         let n = problem.size();
         Self {
             inner: GraphInner::Matrix(AdjacencyMatrix::new(problem)),
-            pi: vec![0; n],
+            pi: vec![0.0; n],
         }
     }
 
@@ -59,7 +59,7 @@ impl<'a> Graph<'a> {
         let n = problem.size();
         Self {
             inner: GraphInner::List(AdjacencyList::new(problem, list)),
-            pi: vec![0; n],
+            pi: vec![0.0; n],
         }
     }
 
@@ -67,7 +67,7 @@ impl<'a> Graph<'a> {
         let n = problem.size();
         Self {
             inner: GraphInner::List(AdjacencyList::from_edges(problem, edges)),
-            pi: vec![0; n],
+            pi: vec![0.0; n],
         }
     }
 
@@ -78,7 +78,7 @@ impl<'a> Graph<'a> {
         }
     }
 
-    pub fn weight(&self, c1: City, c2: City) -> i64 {
+    pub fn weight(&self, c1: City, c2: City) -> f64 {
         let base = match &self.inner {
             GraphInner::Matrix(am) => am.problem.distance(c1, c2),
             GraphInner::List(al) => al.problem.distance(c1, c2),
@@ -90,7 +90,7 @@ impl<'a> Graph<'a> {
         }
     }
 
-    pub fn edge_weight(&self, edge: Edge) -> i64 {
+    pub fn edge_weight(&self, edge: Edge) -> f64 {
         self.weight(edge.u, edge.v)
     }
 
@@ -159,7 +159,7 @@ impl<'a> Graph<'a> {
         (0..self.n()).map(City)
     }
 
-    pub fn complete_weight(&self) -> i64 {
+    pub fn complete_weight(&self) -> f64 {
         self.edges().map(|e| self.weight(e.u, e.v)).sum()
     }
 }
@@ -180,12 +180,15 @@ mod tests {
             Point(0.0, 1.0),
         ];
 
-        let problem = PointsAndFunction::<f64, i64, Euc2d>::new(points);
+        let problem = PointsAndFunction::<f64, f64, Euc2d>::new(points);
         TspProblem::Euclidean(problem)
     }
 
     fn create_test_distance_matrix() -> TspProblem {
-        let flat_matrix = vec![0, 10, 15, 20, 10, 0, 35, 25, 15, 35, 0, 30, 20, 25, 30, 0];
+        let flat_matrix = vec![
+            0.0, 10.0, 15.0, 20.0, 10.0, 0.0, 35.0, 25.0, 15.0, 35.0, 0.0, 30.0, 20.0, 25.0, 30.0,
+            0.0,
+        ];
         TspProblem::DistanceMatrix(DistanceMatrix::from_flat(flat_matrix))
     }
 
@@ -195,7 +198,7 @@ mod tests {
         let adj_matrix = AdjacencyMatrix::new(&distance_matrix);
 
         assert_eq!(adj_matrix.problem.size(), 4);
-        assert_eq!(adj_matrix.problem.distance(City(0), City(1)), 10);
+        assert_eq!(adj_matrix.problem.distance(City(0), City(1)), 10.0);
     }
 
     #[test]
@@ -220,9 +223,9 @@ mod tests {
         let distance_matrix = create_test_distance_matrix();
         let graph = Graph::new_matrix(&distance_matrix);
 
-        assert_eq!(graph.weight(City(0), City(1)), 10);
-        assert_eq!(graph.weight(City(1), City(2)), 35);
-        assert_eq!(graph.weight(City(0), City(3)), 20);
+        assert_eq!(graph.weight(City(0), City(1)), 10.0);
+        assert_eq!(graph.weight(City(1), City(2)), 35.0);
+        assert_eq!(graph.weight(City(0), City(3)), 20.0);
     }
 
     #[test]
@@ -232,7 +235,7 @@ mod tests {
         let graph = Graph::new_list(&problem, list);
 
         let weight = graph.weight(City(0), City(1));
-        assert!(weight > 0);
+        assert!(weight > 0.0);
     }
 
     #[test]
@@ -352,7 +355,7 @@ mod tests {
         let graph = Graph::new_matrix(&distance_matrix);
 
         let total_weight = graph.complete_weight();
-        assert_eq!(total_weight, 10 + 15 + 20 + 35 + 25 + 30);
+        assert_eq!(total_weight, 10.0 + 15.0 + 20.0 + 35.0 + 25.0 + 30.0);
     }
 
     #[test]
@@ -367,7 +370,7 @@ mod tests {
         let graph = Graph::new_list(&problem, list);
 
         let total_weight = graph.complete_weight();
-        assert!(total_weight > 0);
+        assert!(total_weight > 0.0);
     }
 
     #[test]
@@ -376,22 +379,22 @@ mod tests {
         let mut graph = Graph::new_matrix(&distance_matrix);
 
         // Test standard weight calculation (pi is initialized with zeros)
-        assert_eq!(graph.weight(City(0), City(1)), 10);
-        assert_eq!(graph.weight(City(1), City(2)), 35);
+        assert_eq!(graph.weight(City(0), City(1)), 10.0);
+        assert_eq!(graph.weight(City(1), City(2)), 35.0);
 
         // Update Pi values
-        graph.pi = vec![1, 2, 3, 4];
+        graph.pi = vec![1.0, 2.0, 3.0, 4.0];
 
         // Test Pi-adjusted weight calculation
-        assert_eq!(graph.weight(City(0), City(1)), 10 + 1 + 2); // 13
-        assert_eq!(graph.weight(City(1), City(2)), 35 + 2 + 3); // 40
+        assert_eq!(graph.weight(City(0), City(1)), 10.0 + 1.0 + 2.0); // 13
+        assert_eq!(graph.weight(City(1), City(2)), 35.0 + 2.0 + 3.0); // 40
 
         // Test getting Pi values
-        assert_eq!(graph.pi, vec![1, 2, 3, 4]);
+        assert_eq!(graph.pi, vec![1.0, 2.0, 3.0, 4.0]);
 
         // Test removing Pi (set back to zeros)
-        graph.pi = vec![0, 0, 0, 0];
-        assert_eq!(graph.weight(City(0), City(1)), 10);
+        graph.pi = vec![0.0, 0.0, 0.0, 0.0];
+        assert_eq!(graph.weight(City(0), City(1)), 10.0);
     }
 
     #[test]
@@ -408,13 +411,13 @@ mod tests {
         let base_weight = graph.weight(City(0), City(1));
 
         // Update Pi values
-        graph.pi = vec![10, 20, 30, 40];
+        graph.pi = vec![10.0, 20.0, 30.0, 40.0];
 
         // Test Pi-adjusted weight
-        assert_eq!(graph.weight(City(0), City(1)), base_weight + 10 + 20);
+        assert_eq!(graph.weight(City(0), City(1)), base_weight + 10.0 + 20.0);
         assert_eq!(
             graph.weight(City(2), City(3)),
-            graph.problem().distance(City(2), City(3)) + 30 + 40
+            graph.problem().distance(City(2), City(3)) + 30.0 + 40.0
         );
     }
 }

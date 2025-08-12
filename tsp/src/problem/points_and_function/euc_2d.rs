@@ -2,13 +2,13 @@
 
 use super::{DistanceMetric, Point};
 pub enum Euc2d {}
-impl DistanceMetric<f64, i64> for Euc2d {
-    fn compute(p1: &Point<f64>, p2: &Point<f64>) -> i64 {
+impl DistanceMetric<f64, f64> for Euc2d {
+    fn compute(p1: &Point<f64>, p2: &Point<f64>) -> f64 {
         let dx = p1.0 - p2.0;
         let dy = p1.1 - p2.1;
 
         let squared_distance = dx * dx + dy * dy;
         let distance = squared_distance.sqrt();
-        distance.round() as i64
+        distance.round()
     }
 }

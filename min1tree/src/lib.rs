@@ -10,7 +10,7 @@ pub struct Min1Tree<'a> {
     pub mst_edges: Vec<Edge>,
     pub smallest_edge_last_city: Edge,
     pub second_smallest_edge_last_city: Edge,
-    pub total_weight: i64,
+    pub total_weight: f64,
 }
 
 impl<'a> Min1Tree<'a> {
@@ -19,7 +19,7 @@ impl<'a> Min1Tree<'a> {
         mst_edges: Vec<Edge>,
         smallest_edge_last_city: Edge,
         second_smallest_edge_last_city: Edge,
-        total_weight: i64,
+        total_weight: f64,
     ) -> Self {
         Min1Tree {
             graph,
@@ -83,7 +83,10 @@ mod tests {
         // 1: [10, 0, 35, 25]
         // 2: [15, 35, 0, 30]
         // 3: [20, 25, 30, 0]
-        let flat_matrix = vec![0, 10, 15, 20, 10, 0, 35, 25, 15, 35, 0, 30, 20, 25, 30, 0];
+        let flat_matrix = vec![
+            0.0, 10.0, 15.0, 20.0, 10.0, 0.0, 35.0, 25.0, 15.0, 35.0, 0.0, 30.0, 20.0, 25.0, 30.0,
+            0.0,
+        ];
         TspProblem::DistanceMatrix(DistanceMatrix::from_flat(flat_matrix))
     }
 
@@ -97,7 +100,7 @@ mod tests {
         assert_eq!(min1_tree.mst_edges.len(), 2);
 
         // Total weight should be positive
-        assert_eq!(min1_tree.total_weight, 70);
+        assert_eq!(min1_tree.total_weight, 70.0);
         let expected_edges = vec![Edge::new(City(0), City(1)), Edge::new(City(0), City(2))];
         assert_eq!(min1_tree.mst_edges, expected_edges);
         assert_eq!(
@@ -119,14 +122,19 @@ mod tests {
 
         // Create sorted edges excluding those incident to last city (City(3))
         let mut edges_slice: Vec<Edge> = graph.edges().filter(|e| e.u.0 < 3 && e.v.0 < 3).collect();
-        edges_slice.sort_by_key(|e| graph.edge_weight(*e));
+        edges_slice.sort_by(|a, b| {
+            graph
+                .edge_weight(*a)
+                .partial_cmp(&graph.edge_weight(*b))
+                .unwrap()
+        });
 
         let min1_tree = get_min_1_tree(&graph, Some(&mut edges_slice));
 
         assert_eq!(min1_tree.mst_edges.len(), 2);
 
         // Total weight should be positive
-        assert_eq!(min1_tree.total_weight, 70);
+        assert_eq!(min1_tree.total_weight, 70.0);
         let expected_edges = vec![Edge::new(City(0), City(1)), Edge::new(City(0), City(2))];
         assert_eq!(min1_tree.mst_edges, expected_edges);
         assert_eq!(

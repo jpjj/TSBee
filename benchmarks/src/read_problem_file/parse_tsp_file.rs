@@ -65,7 +65,7 @@ pub struct TspFileData {
     pub edge_weight_type: EdgeWeightType,
     pub edge_weight_format: Option<EdgeWeightFormat>,
     pub node_coords: Option<Vec<(f64, f64)>>,
-    pub edge_weights: Option<Vec<Vec<i64>>>,
+    pub edge_weights: Option<Vec<Vec<f64>>>,
 }
 
 pub fn parse_tsp_file(path: &Path) -> Result<TspFileData, Box<dyn std::error::Error>> {
@@ -126,9 +126,9 @@ pub fn parse_tsp_file(path: &Path) -> Result<TspFileData, Box<dyn std::error::Er
                 }
             }
         } else if in_weight_section {
-            let weights: Vec<i64> = line
+            let weights: Vec<f64> = line
                 .split_whitespace()
-                .filter_map(|s| s.parse::<i64>().ok())
+                .filter_map(|s| s.parse::<f64>().ok())
                 .collect();
             if !weights.is_empty() {
                 edge_weights.extend(weights);
@@ -195,10 +195,10 @@ pub fn parse_tsp_file(path: &Path) -> Result<TspFileData, Box<dyn std::error::Er
 
 pub fn build_distance_matrix(
     dimension: usize,
-    weights: &[i64],
+    weights: &[f64],
     format: &Option<EdgeWeightFormat>,
-) -> Result<Vec<Vec<i64>>, Box<dyn std::error::Error>> {
-    let mut matrix = vec![vec![0; dimension]; dimension];
+) -> Result<Vec<Vec<f64>>, Box<dyn std::error::Error>> {
+    let mut matrix = vec![vec![0.0; dimension]; dimension];
     let mut no_matching_format = false;
     let n = dimension;
     match format {

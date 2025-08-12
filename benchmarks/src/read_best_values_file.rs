@@ -6,7 +6,7 @@ use std::path::Path;
 
 pub fn read_best_values<P: AsRef<Path>>(
     path: P,
-) -> Result<HashMap<String, i64>, Box<dyn std::error::Error>> {
+) -> Result<HashMap<String, f64>, Box<dyn std::error::Error>> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
 
@@ -19,7 +19,7 @@ pub fn read_best_values<P: AsRef<Path>>(
             if let (serde_yaml::Value::String(instance_name), serde_yaml::Value::Number(val)) =
                 (key, value)
             {
-                if let Some(num) = val.as_i64() {
+                if let Some(num) = val.as_f64() {
                     best_values.insert(instance_name, num);
                 }
             }
@@ -40,9 +40,9 @@ mod tests {
 
         let best_values = result.unwrap();
 
-        assert_eq!(best_values.get("a280"), Some(&2579));
-        assert_eq!(best_values.get("berlin52"), Some(&7542));
-        assert_eq!(best_values.get("att48"), Some(&10628));
+        assert_eq!(best_values.get("a280"), Some(&2579.0));
+        assert_eq!(best_values.get("berlin52"), Some(&7542.0));
+        assert_eq!(best_values.get("att48"), Some(&10628.0));
 
         assert!(best_values.contains_key("ali535"));
         assert!(best_values.contains_key("usa13509"));

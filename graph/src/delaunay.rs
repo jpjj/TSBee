@@ -76,7 +76,7 @@ mod tests {
             Point(1.0, 1.0), // Point 4: center
         ];
 
-        let euclidean_problem = PointsAndFunction::<f64, i64, Euc2d>::new(points);
+        let euclidean_problem = PointsAndFunction::<f64, f64, Euc2d>::new(points);
         let tsp_problem = TspProblem::Euclidean(euclidean_problem);
 
         let adj_list = AdjacencyList::from_delaunay(&tsp_problem)

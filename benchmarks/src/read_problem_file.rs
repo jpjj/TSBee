@@ -50,7 +50,7 @@ pub fn read_problem_file(path: &Path) -> Result<TspProblem, Box<dyn std::error::
         }
         EdgeWeightType::Explicit => {
             if let Some(weights) = tsp_data.edge_weights {
-                let flat_weights: Vec<i64> = weights.into_iter().flatten().collect();
+                let flat_weights: Vec<f64> = weights.into_iter().flatten().collect();
                 TspProblem::DistanceMatrix(DistanceMatrix::from_flat(flat_weights))
             } else {
                 return Err("Expected edge weights for explicit problem".into());
@@ -78,9 +78,9 @@ mod tests {
         problem::{Problem, TspProblem},
     };
 
-    #[test_case("fri26", 26, 83, 42; "fri26")]
-    #[test_case("gr96", 96, 1690, 876; "gr96")]
-    fn test_read_problem_file(name: &str, size: usize, entry_0_1: i64, entry_2_4: i64) {
+    #[test_case("fri26", 26, 83.0, 42.0; "fri26")]
+    #[test_case("gr96", 96, 1690.0, 876.0; "gr96")]
+    fn test_read_problem_file(name: &str, size: usize, entry_0_1: f64, entry_2_4: f64) {
         let path = PathBuf::from(format!("data/problems/{name}.tsp"));
         assert!(path.exists());
         let problem: TspProblem = read_problem_file(&path).unwrap();

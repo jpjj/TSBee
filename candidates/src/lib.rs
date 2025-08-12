@@ -23,7 +23,7 @@ impl NearestNeighbors {
             city_candidates.sort_by(|a, b| {
                 let dist_a = tsp_problem.distance(from_city, *a);
                 let dist_b = tsp_problem.distance(from_city, *b);
-                dist_a.cmp(&dist_b)
+                dist_a.partial_cmp(&dist_b).unwrap()
             });
             if let Some(actual_k) = k {
                 city_candidates.truncate(actual_k);

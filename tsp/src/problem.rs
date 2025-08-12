@@ -23,15 +23,15 @@ pub trait Problem {
 }
 
 pub enum TspProblem {
-    Euclidean(PointsAndFunction<f64, i64, Euc2d>),
-    Att(PointsAndFunction<f64, i64, ATT>),
-    Ceil(PointsAndFunction<f64, i64, Ceil2d>),
-    Geo(PointsAndFunction<f64, i64, Geo>),
-    DistanceMatrix(DistanceMatrix<i64>),
+    Euclidean(PointsAndFunction<f64, f64, Euc2d>),
+    Att(PointsAndFunction<f64, f64, ATT>),
+    Ceil(PointsAndFunction<f64, f64, Ceil2d>),
+    Geo(PointsAndFunction<f64, f64, Geo>),
+    DistanceMatrix(DistanceMatrix<f64>),
 }
 
 impl Problem for TspProblem {
-    type Distance = i64;
+    type Distance = f64;
 
     fn size(&self) -> usize {
         match self {
