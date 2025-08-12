@@ -1,9 +1,11 @@
 /// This held-karp approach is inspired by this paper: https://users.cs.cf.ac.uk/C.L.Mumford/papers/HeldKarp.pdf
+mod utils;
 use std::vec;
 
 use graph::Graph;
 use min1tree::get_min_1_tree;
 use tsp::edge::Edge;
+use utils::dot_product;
 
 fn calc_stepsize(m: i32, big_m: i32, t_1: f64) -> f64 {
     let part1_num = ((m - 1) * (2 * big_m - 5)) as f64;
@@ -56,7 +58,10 @@ pub fn run(graph: &mut Graph) -> (Vec<f64>, f64) {
         min_1_tree = get_min_1_tree(graph, Some(&mut edges));
         t_1 = min_1_tree.total_weight as f64 / (2.0 * n as f64);
     }
-    (graph.pi.clone(), min_1_tree.total_weight)
+    let final_pi = graph.pi.clone();
+    let final_degrees: Vec<f64> = min_1_tree.degrees().into_iter().map(|x| x as f64).collect();
+    let final_bound = min_1_tree.total_weight - 2.0 * dot_product(&final_degrees, &final_pi);
+    (final_pi, final_bound)
 }
 
 #[cfg(test)]

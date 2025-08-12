@@ -120,12 +120,12 @@ impl<'a> Graph<'a> {
         neighbors.into_iter()
     }
 
-    pub fn degrees(&self) -> Vec<usize> {
+    pub fn degrees(&self) -> Vec<i32> {
         match &self.inner {
-            GraphInner::Matrix(_) => vec![self.n() - 1; self.n()],
+            GraphInner::Matrix(_) => vec![self.n() as i32 - 1; self.n()],
             GraphInner::List(al) => (0..self.n())
-                .map(|c_idx| al.list[c_idx].len())
-                .collect::<Vec<usize>>(),
+                .map(|c_idx| al.list[c_idx].len() as i32)
+                .collect::<Vec<i32>>(),
         }
     }
 
