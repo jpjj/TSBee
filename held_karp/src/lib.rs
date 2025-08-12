@@ -33,9 +33,9 @@ pub fn run(graph: &mut Graph) -> (Vec<f64>, f64) {
     // calculate stepsize  t_i according to the Volgenant and Jonker Strategy.
     // Get pi_i given t_i, d_i and d_(i-1)
     // Calculate the new min1tree for pi_i
-    let big_m = 1000;
 
     let n = graph.n();
+    let big_m = n as i32;
     // pi is already initialized to vec![0; n] by default in Graph
 
     // no edges to City n - 1, that is the definition of our 1-tree here.
@@ -87,6 +87,6 @@ mod tests {
         // The bound should also be reasonably close to the optimal
         // Typically within 1-2% for good implementations
         let ratio = held_karp_bound / 7542.0;
-        assert!(ratio > 0.99);
+        assert!(ratio > 0.999);
     }
 }
