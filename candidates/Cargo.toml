@@ -5,3 +5,7 @@ edition = "2024"
 
 [dependencies]
 tsp = { path = "../tsp"}
+graph = { path = "../graph"}
+alpha_nearness = { path = "../alpha_nearness"}
+held_karp = { path = "../held_karp"}
+benchmarks = { path = "../benchmarks"}

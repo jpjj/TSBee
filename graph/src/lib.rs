@@ -4,6 +4,7 @@ use tsp::{
     city::City,
     edge::Edge,
     problem::{Problem, TspProblem},
+    solution::Solution,
 };
 
 pub struct AdjacencyMatrix<'a> {
@@ -34,6 +35,15 @@ impl<'a> AdjacencyList<'a> {
         }
         Self { problem, list }
     }
+}
+
+pub fn get_solution_as_graph<'a, P, S>(problem: &'a TspProblem, solution: S) -> Graph<'a>
+where
+    P: Problem,
+    S: Solution<P>,
+{
+    let edges: Vec<Edge> = solution.get_edges().into_iter().collect();
+    Graph::new_list_from_edges(problem, edges)
 }
 
 pub struct Graph<'a> {
