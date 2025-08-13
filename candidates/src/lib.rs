@@ -1,4 +1,5 @@
 use graph::{AdjacencyList, Graph};
+use ordered_float::OrderedFloat;
 use tsp::city::City;
 
 #[derive(Clone, Copy, Debug)]
@@ -15,80 +16,38 @@ pub fn get_candidates_graph<'a>(
     k: usize,
 ) -> Result<Graph<'a>, Box<dyn std::error::Error>> {
     match method {
-        CandidateMethod::NearestNeighbor => get_nearest_neighbor_candidates(graph, k),
+        CandidateMethod::NearestNeighbor => {
+            get_nearest_neighbor_candidates(graph, k, |a, b| graph.weight(a, b))
+        }
         CandidateMethod::AlphaNearness => get_alpha_nearness_candidates(graph, k),
         CandidateMethod::HeldKarp => get_held_karp_candidates(graph, k),
         CandidateMethod::Delaunay => get_delaunay_candidates(graph),
     }
 }
 
-fn get_nearest_neighbor_candidates<'a>(
+fn get_nearest_neighbor_candidates<'a, F>(
     graph: &'a Graph<'a>,
     k: usize,
-) -> Result<Graph<'a>, Box<dyn std::error::Error>> {
+    compare: F,
+) -> Result<Graph<'a>, Box<dyn std::error::Error>>
+where
+    F: Fn(City, City) -> f64,
+{
     let n = graph.n();
     let mut adjacency_list = vec![Vec::new(); n];
 
     for city in graph.cities() {
-        let mut neighbors_with_weights: Vec<(City, f64)> = graph
-            .cities()
-            .filter(|&other| other != city)
-            .map(|other| (other, graph.weight(city, other)))
-            .collect();
+        let mut neighbors: Vec<City> = graph.neighbors(city).collect();
+        let mut neighbor_weights: Vec<f64> = neighbors.iter().map(|n| compare(city, *n)).collect();
+        neighbors.sort_by_key(|c| OrderedFloat(compare(city, *c)));
+        neighbor_weights.sort_by_key(|&w| OrderedFloat(w));
 
-        neighbors_with_weights.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+        let mut idx = k;
+        while idx < n && neighbor_weights[idx - 1] == neighbor_weights[idx] {
+            idx += 1;
+        }
 
-        let k_th_weight = if neighbors_with_weights.len() > k {
-            neighbors_with_weights[k - 1].1
-        } else {
-            f64::INFINITY
-        };
-
-        let candidates: Vec<City> = neighbors_with_weights
-            .into_iter()
-            .filter(|(_, weight)| *weight <= k_th_weight)
-            .map(|(neighbor, _)| neighbor)
-            .collect();
-
-        adjacency_list[city.0] = candidates;
-    }
-
-    Ok(Graph::new_list(graph.problem(), adjacency_list))
-}
-
-fn build_candidate_graph_from_alpha_values<'a>(
-    graph: &'a Graph,
-    alpha_values: Vec<f64>,
-    k: usize,
-) -> Result<Graph<'a>, Box<dyn std::error::Error>> {
-    let n = graph.n();
-    let mut adjacency_list = vec![Vec::new(); n];
-
-    for city in graph.cities() {
-        let mut neighbors_with_alpha: Vec<(City, f64)> = graph
-            .cities()
-            .filter(|&other| other != city)
-            .map(|other| {
-                let alpha_idx = city.0 * n + other.0;
-                (other, alpha_values[alpha_idx])
-            })
-            .collect();
-
-        neighbors_with_alpha.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-
-        let k_th_alpha = if neighbors_with_alpha.len() > k {
-            neighbors_with_alpha[k - 1].1
-        } else {
-            f64::INFINITY
-        };
-
-        let candidates: Vec<City> = neighbors_with_alpha
-            .into_iter()
-            .filter(|(_, alpha)| *alpha <= k_th_alpha)
-            .map(|(neighbor, _)| neighbor)
-            .collect();
-
-        adjacency_list[city.0] = candidates;
+        adjacency_list[city.0] = neighbors.into_iter().take(idx).collect();
     }
 
     Ok(Graph::new_list(graph.problem(), adjacency_list))
@@ -99,7 +58,8 @@ fn get_alpha_nearness_candidates<'a>(
     k: usize,
 ) -> Result<Graph<'a>, Box<dyn std::error::Error>> {
     let alpha_values = alpha_nearness::get_alpha_values(graph);
-    build_candidate_graph_from_alpha_values(graph, alpha_values, k)
+    let n = graph.n();
+    get_nearest_neighbor_candidates(graph, k, |a, b| alpha_values[a.0 * n + b.0])
 }
 
 fn get_held_karp_candidates<'a>(
@@ -113,9 +73,9 @@ fn get_held_karp_candidates<'a>(
 
     let mut updated_graph = Graph::new_matrix(graph.problem());
     updated_graph.pi = pi;
-
     let alpha_values = alpha_nearness::get_alpha_values(&updated_graph);
-    build_candidate_graph_from_alpha_values(graph, alpha_values, k)
+    let n = graph.n();
+    get_nearest_neighbor_candidates(graph, k, |a, b| alpha_values[a.0 * n + b.0])
 }
 
 fn get_delaunay_candidates<'a>(
@@ -195,7 +155,6 @@ mod tests {
 
                 let coverage = calculate_edge_coverage(&candidate_graph, optimal_graph);
                 println!("AlphaNearness (k=5) coverage: {:.2}%", coverage * 100.0);
-
                 assert!(coverage > 0.0, "Should cover some optimal edges");
             },
         );
@@ -207,13 +166,13 @@ mod tests {
             "berlin52.tsp",
             "berlin52.opt.tour",
             |graph, optimal_graph| {
-                let candidate_graph = get_candidates_graph(graph, CandidateMethod::HeldKarp, 5)
+                let candidate_graph = get_candidates_graph(graph, CandidateMethod::HeldKarp, 1)
                     .expect("Failed to get candidates");
 
                 let coverage = calculate_edge_coverage(&candidate_graph, optimal_graph);
                 println!("HeldKarp (k=5) coverage: {:.2}%", coverage * 100.0);
 
-                assert!(coverage > 0.0, "Should cover some optimal edges");
+                assert_eq!(coverage, 1.0, "Should cover all optimal edges");
             },
         );
     }

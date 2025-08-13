@@ -6,8 +6,8 @@ use std::io::Write;
 use std::path::PathBuf;
 use tsp::problem::Problem;
 
-const MIN_SIZE: usize = 100;
-const MAX_SIZE: usize = 500;
+const MIN_SIZE: usize = 20;
+const MAX_SIZE: usize = 100;
 const K: usize = 10;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

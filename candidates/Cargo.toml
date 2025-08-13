@@ -9,3 +9,4 @@ graph = { path = "../graph"}
 alpha_nearness = { path = "../alpha_nearness"}
 held_karp = { path = "../held_karp"}
 benchmarks = { path = "../benchmarks"}
+ordered-float = "5.0.0"

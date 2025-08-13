@@ -1,4 +1,5 @@
 use graph::Graph;
+use ordered_float::OrderedFloat;
 use tsp::edge::Edge;
 
 pub struct Kruskal<'a> {
@@ -24,12 +25,7 @@ impl<'a> Kruskal<'a> {
     }
 
     pub fn sort_edges(&self, edges: &mut [Edge]) {
-        edges.sort_by(|a, b| {
-            self.graph
-                .weight(a.u, a.v)
-                .partial_cmp(&self.graph.weight(b.u, b.v))
-                .unwrap()
-        });
+        edges.sort_by_key(|&e| OrderedFloat(self.graph.edge_weight(e)));
     }
 
     pub fn get_mst_from_sorted_edges(&self, edges: &[Edge]) -> (Vec<Edge>, f64) {
