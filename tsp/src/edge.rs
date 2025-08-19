@@ -1,6 +1,6 @@
 use crate::city::City;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd)]
 pub struct Edge {
     pub u: City,
     pub v: City,

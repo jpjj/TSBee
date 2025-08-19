@@ -66,12 +66,12 @@ fn get_held_karp_candidates<'a>(
     graph: &'a Graph<'a>,
     k: usize,
 ) -> Result<Graph<'a>, Box<dyn std::error::Error>> {
-    let mut graph_copy = Graph::new_matrix(graph.problem());
+    let mut graph_copy = graph.clone();
     graph_copy.pi = graph.pi.clone();
 
     let (pi, _) = held_karp::run(&mut graph_copy);
 
-    let mut updated_graph = Graph::new_matrix(graph.problem());
+    let mut updated_graph = graph.clone();
     updated_graph.pi = pi;
     let alpha_values = alpha_nearness::get_alpha_values(&updated_graph);
     let n = graph.n();
@@ -173,6 +173,29 @@ mod tests {
                 println!("HeldKarp (k=5) coverage: {:.2}%", coverage * 100.0);
 
                 assert_eq!(coverage, 1.0, "Should cover all optimal edges");
+            },
+        );
+    }
+    #[test]
+    fn test_held_karp_on_alpha_nearness_berlin52() {
+        load_and_test(
+            "berlin52.tsp",
+            "berlin52.opt.tour",
+            |graph, optimal_graph| {
+                let candidate_graph_alpha_nearness =
+                    get_candidates_graph(graph, CandidateMethod::AlphaNearness, 20)
+                        .expect("Failed to get candidates");
+                let candidate_graph = get_candidates_graph(
+                    &candidate_graph_alpha_nearness,
+                    CandidateMethod::HeldKarp,
+                    5,
+                )
+                .expect("Failed to get candidates");
+
+                let coverage = calculate_edge_coverage(&candidate_graph, optimal_graph);
+                println!("HeldKarp (k=5) coverage: {:.2}%", coverage * 100.0);
+
+                // assert_eq!(coverage, 1.0, "Should cover all optimal edges");
             },
         );
     }

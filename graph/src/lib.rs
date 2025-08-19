@@ -1,5 +1,4 @@
 mod delaunay;
-
 use tsp::{
     city::City,
     edge::Edge,
@@ -7,6 +6,7 @@ use tsp::{
     solution::Solution,
 };
 
+#[derive(Clone)]
 pub struct AdjacencyMatrix<'a> {
     pub problem: &'a TspProblem,
 }
@@ -17,6 +17,7 @@ impl<'a> AdjacencyMatrix<'a> {
     }
 }
 
+#[derive(Clone)]
 pub struct AdjacencyList<'a> {
     pub problem: &'a TspProblem,
     pub list: Vec<Vec<City>>,
@@ -46,11 +47,13 @@ where
     Graph::new_list_from_edges(problem, edges)
 }
 
+#[derive(Clone)]
 pub struct Graph<'a> {
     inner: GraphInner<'a>,
     pub pi: Vec<f64>,
 }
 
+#[derive(Clone)]
 enum GraphInner<'a> {
     Matrix(AdjacencyMatrix<'a>),
     List(AdjacencyList<'a>),
@@ -147,20 +150,23 @@ impl<'a> Graph<'a> {
                     .flat_map(|i| (i + 1..n).map(move |j| Edge::new(City(i), City(j))))
                     .collect()
             }
-            GraphInner::List(al) => al
-                .list
-                .iter()
-                .enumerate()
-                .flat_map(|(i, neighbors)| {
-                    neighbors.iter().filter_map(move |&neighbor| {
-                        if neighbor.0 > i {
-                            Some(Edge::new(City(i), neighbor))
-                        } else {
-                            None
-                        }
+            GraphInner::List(al) => {
+                let edges: Vec<Edge> = al
+                    .list
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(i, neighbors)| {
+                        neighbors.iter().filter_map(move |&neighbor| {
+                            if neighbor.0 > i {
+                                Some(Edge::new(City(i), neighbor))
+                            } else {
+                                None
+                            }
+                        })
                     })
-                })
-                .collect(),
+                    .collect();
+                edges
+            }
         };
         edges.into_iter()
     }

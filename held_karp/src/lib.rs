@@ -1,11 +1,10 @@
 /// This held-karp approach is inspired by this paper: https://users.cs.cf.ac.uk/C.L.Mumford/papers/HeldKarp.pdf
-mod utils;
+use core::f64;
 use std::vec;
 
 use graph::Graph;
 use min1tree::get_min_1_tree;
 use tsp::edge::Edge;
-use utils::dot_product;
 
 fn calc_stepsize(m: i32, big_m: i32, t_1: f64) -> f64 {
     let part1_num = ((m - 1) * (2 * big_m - 5)) as f64;
@@ -41,12 +40,13 @@ pub fn run(graph: &mut Graph) -> (Vec<f64>, f64) {
     // pi is already initialized to vec![0; n] by default in Graph
 
     // no edges to City n - 1, that is the definition of our 1-tree here.
-    let mut edges: Vec<Edge> = graph.edges().filter(|e| e.v.0 < n - 1).collect();
-
+    let mut edges: Vec<Edge> = graph.edges().collect();
+    // assert_eq!(graph.m(), edges.len());
+    edges.retain(|&e| e.v.0 < n - 1);
     let mut min_1_tree = get_min_1_tree(graph, Some(&mut edges));
     let mut degrees = vec![2; n];
     let mut degrees_prev;
-    let mut t_1 = min_1_tree.total_weight as f64 / (2.0 * n as f64);
+    let mut t_1 = min_1_tree.total_weight / (2.0 * n as f64);
 
     for m in 1..=big_m {
         degrees_prev = degrees.clone();
@@ -59,8 +59,7 @@ pub fn run(graph: &mut Graph) -> (Vec<f64>, f64) {
         t_1 = min_1_tree.total_weight as f64 / (2.0 * n as f64);
     }
     let final_pi = graph.pi.clone();
-    let final_degrees: Vec<f64> = min_1_tree.degrees().into_iter().map(|x| x as f64).collect();
-    let final_bound = min_1_tree.total_weight - 2.0 * dot_product(&final_degrees, &final_pi);
+    let final_bound = min_1_tree.total_weight - 2.0 * final_pi.iter().sum::<f64>();
     (final_pi, final_bound)
 }
 

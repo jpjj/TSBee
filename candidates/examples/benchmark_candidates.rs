@@ -4,10 +4,10 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-use tsp::problem::Problem;
+use tsp::problem::{Problem, TspProblem};
 
-const MIN_SIZE: usize = 20;
-const MAX_SIZE: usize = 100;
+const MIN_SIZE: usize = 50;
+const MAX_SIZE: usize = 200;
 const K: usize = 10;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -68,6 +68,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ];
 
         for method in methods {
+            // only take either Delaunay PointsAndFunction combination or not Delaunay DistanceMatrix combination
+            if matches!(method, CandidateMethod::Delaunay) {
+                if matches!(problem, TspProblem::DistanceMatrix(_)) {
+                    continue;
+                }
+            } else if !matches!(problem, TspProblem::DistanceMatrix(_)) {
+                continue;
+            }
+
             let method_name = format!("{method:?}");
             let mut percentages = Vec::new();
 
