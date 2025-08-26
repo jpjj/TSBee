@@ -46,7 +46,9 @@ pub fn run(graph: &mut Graph) -> (Vec<f64>, f64) {
     let mut min_1_tree = get_min_1_tree(graph, Some(&mut edges));
     let mut degrees = vec![2; n];
     let mut degrees_prev;
-    let mut t_1 = min_1_tree.total_weight / (2.0 * n as f64);
+    let t_1 = min_1_tree.total_weight / (2.0 * n as f64);
+    let mut final_bound = f64::MIN;
+    let mut final_pi = graph.pi.clone();
 
     for m in 1..=big_m {
         degrees_prev = degrees.clone();
@@ -56,10 +58,13 @@ pub fn run(graph: &mut Graph) -> (Vec<f64>, f64) {
         let t_i = calc_stepsize(m, big_m, t_1);
         graph.pi = calc_new_pi(graph.pi.clone(), t_i, &degrees, &degrees_prev);
         min_1_tree = get_min_1_tree(graph, Some(&mut edges));
-        t_1 = min_1_tree.total_weight as f64 / (2.0 * n as f64);
+        let current_bound = min_1_tree.total_weight - 2.0 * graph.pi.iter().sum::<f64>();
+        if current_bound > final_bound {
+            final_bound = current_bound;
+            final_pi = graph.pi.clone();
+        }
+        // t_1 = min_1_tree.total_weight as f64 / (2.0 * n as f64);
     }
-    let final_pi = graph.pi.clone();
-    let final_bound = min_1_tree.total_weight - 2.0 * final_pi.iter().sum::<f64>();
     (final_pi, final_bound)
 }
 

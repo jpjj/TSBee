@@ -58,15 +58,18 @@ pub fn get_min_1_tree<'a>(graph: &'a Graph<'a>, edges: Option<&mut [Edge]>) -> M
             kruskal.get_mst(Some(&mut actual_edges))
         }
     };
-    let weights: Vec<_> = graph
-        .neighbors(City(n - 1))
-        .map(|c| graph.weight(City(n - 1), c))
+    let neighbors_of_city_n_1: Vec<_> = graph.neighbors(City(n - 1)).collect();
+    let weights: Vec<_> = neighbors_of_city_n_1
+        .iter()
+        .map(|c| graph.weight(City(n - 1), *c))
         .collect();
     let two_closest_neighors = get_2_smallest_args(&weights).expect(
         "Error while getting two smallest incident edges to City n-1 in Min-1-Tree Calculation",
     );
-    let edge0 = Edge::new(City(n - 1), City(two_closest_neighors.0));
-    let edge1 = Edge::new(City(n - 1), City(two_closest_neighors.1));
+    let city_0 = neighbors_of_city_n_1[two_closest_neighors.0];
+    let city_1 = neighbors_of_city_n_1[two_closest_neighors.1];
+    let edge0 = Edge::new(City(n - 1), city_0);
+    let edge1 = Edge::new(City(n - 1), city_1);
     total_weight += graph.edge_weight(edge0) + graph.edge_weight(edge1);
     Min1Tree::new(graph, mst_edges, edge0, edge1, total_weight)
 }

@@ -38,12 +38,13 @@ where
 
     for city in graph.cities() {
         let mut neighbors: Vec<City> = graph.neighbors(city).collect();
+        let neigh_len = neighbors.len();
         let mut neighbor_weights: Vec<f64> = neighbors.iter().map(|n| compare(city, *n)).collect();
         neighbors.sort_by_key(|c| OrderedFloat(compare(city, *c)));
         neighbor_weights.sort_by_key(|&w| OrderedFloat(w));
 
         let mut idx = k;
-        while idx < n && neighbor_weights[idx - 1] == neighbor_weights[idx] {
+        while idx < neigh_len && neighbor_weights[idx - 1] == neighbor_weights[idx] {
             idx += 1;
         }
 
@@ -90,6 +91,7 @@ mod tests {
     use super::*;
     use graph::get_solution_as_graph;
     use std::path::PathBuf;
+    use tsp::edge::Edge;
 
     fn load_and_test<F>(problem_name: &str, solution_name: &str, test_fn: F)
     where
@@ -166,8 +168,13 @@ mod tests {
             "berlin52.tsp",
             "berlin52.opt.tour",
             |graph, optimal_graph| {
-                let candidate_graph = get_candidates_graph(graph, CandidateMethod::HeldKarp, 1)
-                    .expect("Failed to get candidates");
+                let new_graph = Graph::new_list_from_edges(
+                    graph.problem(),
+                    graph.edges().collect::<Vec<Edge>>(),
+                );
+                let candidate_graph =
+                    get_candidates_graph(&new_graph, CandidateMethod::HeldKarp, 1)
+                        .expect("Failed to get candidates");
 
                 let coverage = calculate_edge_coverage(&candidate_graph, optimal_graph);
                 println!("HeldKarp (k=5) coverage: {:.2}%", coverage * 100.0);
@@ -188,14 +195,14 @@ mod tests {
                 let candidate_graph = get_candidates_graph(
                     &candidate_graph_alpha_nearness,
                     CandidateMethod::HeldKarp,
-                    5,
+                    1,
                 )
                 .expect("Failed to get candidates");
 
                 let coverage = calculate_edge_coverage(&candidate_graph, optimal_graph);
                 println!("HeldKarp (k=5) coverage: {:.2}%", coverage * 100.0);
 
-                // assert_eq!(coverage, 1.0, "Should cover all optimal edges");
+                assert_eq!(coverage, 1.0, "Should cover all optimal edges");
             },
         );
     }
